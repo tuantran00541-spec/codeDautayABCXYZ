@@ -1,0 +1,32 @@
+ <!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="stopW.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+  <title>Document</title>
+</head>
+<body>
+  <div class="stopwatch">
+    <div class="title">
+      <i class="fa-solid fa-stopwatch"></i>
+    </div>
+    <div class="subtitle">smart Icon toggle(play/pause)</div>
+    <div class="time" id="display">00:00:00</div>
+    <div class="buttons">
+      <button class="star" id="toggleBtn">
+        <i class="fa-solid fa-play" id="toggleIcon" onclick="toggletimer()"></i>
+        <span id="toggleText">star</span>
+      </button>
+      <button class="stop" onclick="stoptimer()">
+          <i class="fa-solid fa-stop"></i>  stop
+      </button>
+      <button class="reset" onclick="resetTimer()">
+        <i class="fa-solid fa-rotate-right"></i> reset
+      </button>
+    </div>
+  </div>
+</body>
+<script src="stopW.js"></script>
+</html>

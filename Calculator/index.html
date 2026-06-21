@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculator [Html Css Js]</title>
+    <title>calculator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,13 +11,13 @@
         <div class="calculator">
             <form>
                 <div class="display">
-                <input type="text" name="display" id="display">
+                    <input type="text" name="display" id="display">
                 </div>
                 <div>
-                    <input type="button" value="AC" onclick="clearDisplay()" class="operator">
-                    <input type="button" value="DE" onclick="deleteLast()" class="operator">
-                    <input type="button" value="." onclick="appendValue('.')" class="operator">
-                    <input type="button" value="/" onclick="appendValue('/')" class="operator">
+                    <input type="button" class="operator" value="AC" onclick="clearDisplay()">
+                    <input type="button" class="operator" value="DE" onclick="deleteLast()">
+                    <input type="button" class="operator" value="." onclick="appendValue('.')">
+                    <input type="button" class="operator" value="/" onclick="appendValue('/')">
                 </div>
                 <div>
                     <input type="button" value="7" onclick="appendValue('7')">
@@ -40,29 +40,23 @@
                 <div>
                     <input type="button" value="00" onclick="appendValue('00')">
                     <input type="button" value="0" onclick="appendValue('0')">
-                    <input type="button" value="=" onclick="calculate()" class="equal operator">
- 
+                    <input type="button" value="=" onclick="calculate('=')" class="equal operator">
                 </div>
             </form>
         </div>
     </div>
- 
     <script>
         const display = document.getElementById('display');
- 
-        function clearDisplay() {
-            display.value = '';
+        function clearDisplay(){
+            display.value ='';
         }
- 
-        function deleteLast() {
-            display.value = display.value.toString().slice(0, -1);
+        function deleteLast(){
+            display.value = display.value.toString().slice(0,-1);
         }
- 
-        function appendValue(val) {
-            display.value += val;
+        function appendValue(value){
+            display.value +=value;
         }
- 
-        function calculate() {
+        function calculate(){
             display.value = eval(display.value);
         }
     </script>

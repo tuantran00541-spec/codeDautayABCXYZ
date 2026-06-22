@@ -36,11 +36,13 @@
                     <input type="button" value="2" onclick="appendValue('2')">
                     <input type="button" value="3" onclick="appendValue('3')">
                     <input type="button" value="+" onclick="appendValue('+')" class="operator">
+                    <input type="button" value=")" onclick="appendValue(')')" class="operator">
                 </div>
                 <div>
                     <input type="button" value="00" onclick="appendValue('00')">
                     <input type="button" value="0" onclick="appendValue('0')">
                     <input type="button" value="=" onclick="calculate('=')" class="equal operator">
+                    <input type="button" value="√" onclick="calculateSqrt('√')" class="sqrt operator">
                 </div>
             </form>
         </div>
@@ -57,7 +59,20 @@
             display.value +=value;
         }
         function calculate(){
-            display.value = eval(display.value);
+            try{
+                display.value = eval(display.value);
+            }catch(e){
+                display.value = 'error';
+            }
+        }
+        function calculateSqrt(){
+            let so = Number(display.value);
+            if (so < 0){;
+            display.value = 'Error';
+            } else{
+                so = Math.sqrt(so);
+                display.value = so;
+            }
         }
     </script>
 </body>

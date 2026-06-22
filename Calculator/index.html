@@ -42,36 +42,37 @@
                     <input type="button" value="00" onclick="appendValue('00')">
                     <input type="button" value="0" onclick="appendValue('0')">
                     <input type="button" value="=" onclick="calculate('=')" class="equal operator">
-                    <input type="button" value="√" onclick="calculateSqrt('√')" class="sqrt operator">
+                    <input type="button" value="√" onclick="appendValue('√(' ,'Math.sqrt(')" class="sqrt operator">
                 </div>
             </form>
         </div>
     </div>
     <script>
         const display = document.getElementById('display');
+        let expression = "";
+        let lichsu =[];
         function clearDisplay(){
             display.value ='';
+            expression ='';
+            lichsu = [];
         }
         function deleteLast(){
-            display.value = display.value.toString().slice(0,-1);
+            lichsu.pop();
+            display.value = lichsu.map(item => item.value).join('');
+            expression = lichsu.map(item => item.extraValue).join('');
         }
-        function appendValue(value){
+        function appendValue(value, extraValue){
             display.value +=value;
+            lichsu.push({value: value, extraValue: extraValue || value});
+            expression += extraValue || value;
         }
         function calculate(){
             try{
-                display.value = eval(display.value);
+                display.value = eval(expression);
+                    expression = '';
+                    lichsu = [];
             }catch(e){
                 display.value = 'error';
-            }
-        }
-        function calculateSqrt(){
-            let so = Number(display.value);
-            if (so < 0){;
-            display.value = 'Error';
-            } else{
-                so = Math.sqrt(so);
-                display.value = so;
             }
         }
     </script>

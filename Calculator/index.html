@@ -39,42 +39,78 @@
                     <input type="button" value=")" onclick="appendValue(')')" class="operator">
                 
                 
-                    <input type="button" value="^" onclick="appendValue('^', '**')" class="mu operator">
+                    <input type="button" value="^" onclick="appendValue('^')" class="mu operator">
                     <input type="button" value="00" onclick="appendValue('00')">
                     <input type="button" value="0" onclick="appendValue('0')">
                     <input type="button" value="=" onclick="calculate('=')" class="equal operator">
-                    <input type="button" value="√" onclick="appendValue('√(' ,'Math.sqrt(')" class="sqrt operator">
+                    <input type="button" value="√" onclick="appendValue('sqrt(')" class="sqrt operator">
                 </div>
             </form>
         </div>
     </div>
     <script>
         const display = document.getElementById('display');
-        let expression = "";
         let lichsu =[];
         function clearDisplay(){
             display.value ='';
-            expression ='';
             lichsu = [];
         }
         function deleteLast(){
             lichsu.pop();
             display.value = lichsu.map(item => item.value).join('');
-            expression = lichsu.map(item => item.extraValue).join('');
         }
-        function appendValue(value, extraValue){
+        function appendValue(value){
             display.value +=value;
-            lichsu.push({value: value, extraValue: extraValue || value});
-            expression += extraValue || value;
+            lichsu.push({value: value});
         }
         function calculate(){
             try{
-                display.value = eval(expression);
-                    expression = '';
                     lichsu = [];
             }catch(e){
                 display.value = 'error';
             }
+        }
+        function tokenize(input){
+            return input.match(/\d+\.?\d*|[a-z]+|[-+/*^]|[()]/g);
+        }
+        function shuntingYard(token){
+            let output = [];
+            let operatorStack = [];
+            const precedence = {
+                '+':1,
+                '-':1,
+                '/':2,
+                '*':2,
+                '^':3};
+                const rightAssociative = { '^': true };
+                for (let i =0; i < token.length; i++){
+                let t = token[i];
+                if (/\d+\.?\d*/.test(t)){
+                    output.push(t);
+                } else if (/[a-z]+/.test(t)){
+                    operatorStack.push(t);
+                } else if(t ==="("){
+                    operatorStack.push(t);
+                } else if (t ===")"){
+                    while (operatorStack[operatorStack.length - 1] !=="("){
+                        let op = operatorStack.pop();
+                        output.push(op);
+                    }
+                    operatorStack.pop();
+                } else if (/[-+/*^]/.test(t)){
+                    while(operatorStack.length > 0 && operatorStack[operatorStack.length - 1] !=="(" && (rightAssociative[t] 
+                             ? precedence[operatorStack[operatorStack.length - 1]] > precedence[t]
+                             : precedence[operatorStack[operatorStack.length - 1]] >= precedence[t])
+                        ){
+                        output.push(operatorStack.pop());
+                    }
+                    operatorStack.push(t);
+                } 
+            }
+                while(operatorStack.length > 0){
+                    output.push(operatorStack.pop());
+                }
+                return output;
         }
     </script>
 </body>

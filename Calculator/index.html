@@ -36,7 +36,15 @@
                     <input type="button" value="2" onclick="appendValue('2')">
                     <input type="button" value="3" onclick="appendValue('3')">
                     <input type="button" value="+" onclick="appendValue('+')" class="operator">
+                    <input type="button" value="(" onclick="appendValue('(')" class="operator">
                     <input type="button" value=")" onclick="appendValue(')')" class="operator">
+                    <input type="button" value="sin" onclick="appendValue('sin(')" class="sqrt operator">
+                    <input type="button" value="cos" onclick="appendValue('cos(')" class="sqrt operator">
+                    <input type="button" value="log" onclick="appendValue('log(')" class="sqrt operator">
+                    <input type="button" value="tan" onclick="appendValue('tan(')" class="sqrt operator">
+                    <input type="button" value="ln" onclick="appendValue('ln(')" class="sqrt operator">
+                    <input type="button" value="π" onclick="appendValue('pi')" class="sqrt operator">
+                    <input type="button" value="e" onclick="appendValue('e')" class="sqrt operator">
                 
                 
                     <input type="button" value="^" onclick="appendValue('^')" class="mu operator">
@@ -63,15 +71,23 @@
             display.value +=value;
             lichsu.push({value: value});
         }
-        function calculate(){
+       function calculate(){
             try{
-                    lichsu = [];
-            }catch(e){
+                let input = display.value;
+                if (!input) return;
+                let token = tokenize(input);
+                if (!token) { display.value = 'error'; return; }
+                let rpn = shuntingYard(token);
+                console.log('RPN:', rpn);
+                let result = evaluateRPN(rpn);
+                display.value = result;
+                lichsu = [];
+            } catch(e){
                 display.value = 'error';
             }
         }
         function tokenize(input){
-            return input.match(/\d+\.?\d*|[a-z]+|[-+/*^]|[()]/g);
+        return input.match(/\d*\.?\d+|[a-z]+|[-+/*^]|[()]||/g);
         }
         function shuntingYard(token){
             let output = [];
@@ -96,7 +112,10 @@
                         let op = operatorStack.pop();
                         output.push(op);
                     }
-                    operatorStack.pop();
+                     operatorStack.pop();
+                    if (operatorStack.length > 0 && /[a-z]+/.test(operatorStack[operatorStack.length - 1])) {
+                        output.push(operatorStack.pop());
+                    }
                 } else if (/[-+/*^]/.test(t)){
                     while(operatorStack.length > 0 && operatorStack[operatorStack.length - 1] !=="(" && (rightAssociative[t] 
                              ? precedence[operatorStack[operatorStack.length - 1]] > precedence[t]
@@ -106,11 +125,54 @@
                     }
                     operatorStack.push(t);
                 } 
-            }
+                }
                 while(operatorStack.length > 0){
                     output.push(operatorStack.pop());
                 }
                 return output;
+        }
+        function evaluateRPN(rpn){
+            let stack =[];
+            for (let i =0; i < rpn.length; i++){
+                let t =rpn[i];
+                if (!isNaN(parseFloat(t))){
+                    stack.push(parseFloat(t));
+                }else if (/[-+/*^]/.test(t)){
+                   let b = stack.pop();
+                   let a = stack.pop();
+                   if (t ==="+"){
+                    stack.push(a + b);
+                   }else if (t ==="-"){
+                    stack.push(a - b);
+                   }else if (t ==="/"){
+                    stack.push(a/b);
+                   }else if (t ==="^"){
+                    stack.push(Math.pow(a, b));
+                   }else if ( t ==="*"){
+                    stack.push(a*b);
+                   }
+                }else if (/[a-z]+/.test(t)){
+                    let a = stack.pop();
+                    if (t ==="sin"){
+                        stack.push(parseFloat(Math.sin(a*Math.PI/180).toFixed(10)));
+                    }else if (t === "cos"){
+                        stack.push(parseFloat(Math.cos(a*Math.PI/180).toFixed(10)));
+                    }else if ( t ==="log"){
+                        stack.push(Math.log10(a));
+                    }else if ( t ==="sqrt"){
+                        stack.push(Math.sqrt(a));
+                    }else if (t ==="tan"){
+                        stack.push(parseFloat(Math.tan(a*Math.PI/180).toFixed(10)));
+                    }else if (t ==="ln"){
+                        stack.push(Math.log(a));
+                    }else if (t ==="e"){
+                        stack.push(Math.E);
+                    }else if (t ==="pi"){
+                        stack.push(Math.PI);
+                    }
+                }
+            }
+            return stack[0];
         }
     </script>
 </body>

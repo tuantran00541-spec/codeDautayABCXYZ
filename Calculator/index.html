@@ -14,45 +14,53 @@
                     <input type="text" name="display" id="display">
                 </div>
                 <div class="button">
-                    <input type="button" class="operator" value="AC" onclick="clearDisplay()">
-                    <input type="button" class="operator" value="DE" onclick="deleteLast()">
-                    <input type="button" class="operator" value="." onclick="appendValue('.')">
-                    <input type="button" class="operator" value="/" onclick="appendValue('/')">
-                
-                
-                    <input type="button" value="7" onclick="appendValue('7')">
-                    <input type="button" value="8" onclick="appendValue('8')">
-                    <input type="button" value="9" onclick="appendValue('9')">
-                    <input type="button" value="*" onclick="appendValue('*')" class="operator">
-                
-                
-                    <input type="button" value="4" onclick="appendValue('4')">
-                    <input type="button" value="5" onclick="appendValue('5')">
-                    <input type="button" value="6" onclick="appendValue('6')">
-                    <input type="button" value="-" onclick="appendValue('-')" class="operator">
-                
-                
-                    <input type="button" value="1" onclick="appendValue('1')">
-                    <input type="button" value="2" onclick="appendValue('2')">
-                    <input type="button" value="3" onclick="appendValue('3')">
-                    <input type="button" value="+" onclick="appendValue('+')" class="operator">
-                    <input type="button" value="(" onclick="appendValue('(')" class="operator">
-                    <input type="button" value=")" onclick="appendValue(')')" class="operator">
-                    <input type="button" value="sin" onclick="appendValue('sin(')" class="sqrt operator">
-                    <input type="button" value="cos" onclick="appendValue('cos(')" class="sqrt operator">
-                    <input type="button" value="log" onclick="appendValue('log(')" class="sqrt operator">
-                    <input type="button" value="tan" onclick="appendValue('tan(')" class="sqrt operator">
-                    <input type="button" value="ln" onclick="appendValue('ln(')" class="sqrt operator">
-                    <input type="button" value="π" onclick="appendValue('pi')" class="sqrt operator">
-                    <input type="button" value="e" onclick="appendValue('e')" class="sqrt operator">
-                
-                
-                    <input type="button" value="^" onclick="appendValue('^')" class="mu operator">
-                    <input type="button" value="00" onclick="appendValue('00')">
-                    <input type="button" value="0" onclick="appendValue('0')">
-                    <input type="button" value="=" onclick="calculate('=')" class="equal operator">
-                    <input type="button" value="√" onclick="appendValue('sqrt(')" class="sqrt operator">
+                      <!-- Hàng 1: Chức năng -->
+                <input type="button" class="operator" value="AC" onclick="clearDisplay()">
+                <input type="button" class="operator" value="DE" onclick="deleteLast()">
+                <input type="button" value="(" onclick="appendValue('(')" class="operator">
+                <input type="button" value=")" onclick="appendValue(')')" class="operator">
+
+                <!-- Hàng 2: Số + toán tử -->
+                <input type="button" value="7" onclick="appendValue('7')">
+                <input type="button" value="8" onclick="appendValue('8')">
+                <input type="button" value="9" onclick="appendValue('9')">
+                <input type="button" value="/" onclick="appendValue('/')" class="operator">
+
+                <!-- Hàng 3 -->
+                <input type="button" value="4" onclick="appendValue('4')">
+                <input type="button" value="5" onclick="appendValue('5')">
+                <input type="button" value="6" onclick="appendValue('6')">
+                <input type="button" value="*" onclick="appendValue('*')" class="operator">
+
+                <!-- Hàng 4 -->
+                <input type="button" value="1" onclick="appendValue('1')">
+                <input type="button" value="2" onclick="appendValue('2')">
+                <input type="button" value="3" onclick="appendValue('3')">
+                <input type="button" value="-" onclick="appendValue('-')" class="operator">
+
+                <!-- Hàng 5 -->
+                <input type="button" value="0" onclick="appendValue('0')">
+                <input type="button" value="00" onclick="appendValue('00')">
+                <input type="button" class="operator" value="." onclick="appendValue('.')">
+                <input type="button" value="+" onclick="appendValue('+')" class="operator">
+
+                <!-- Hàng 6: Hàm lượng giác -->
+                <input type="button" value="sin" onclick="appendValue('sin(')" class="sqrt operator">
+                <input type="button" value="cos" onclick="appendValue('cos(')" class="sqrt operator">
+                <input type="button" value="tan" onclick="appendValue('tan(')" class="sqrt operator">
+                <input type="button" value="^" onclick="appendValue('^')" class="mu operator">
+
+                <!-- Hàng 7: Hàm khác -->
+                <input type="button" value="log" onclick="appendValue('log(')" class="sqrt operator">
+                <input type="button" value="ln" onclick="appendValue('ln(')" class="sqrt operator">
+                <input type="button" value="√" onclick="appendValue('sqrt(')" class="sqrt operator">
+                <input type="button" value="π" onclick="appendValue('pi')" class="sqrt operator">
+                <input type="button" value="e" onclick="appendValue('e')" class="sqrt operator">
+
+                <!-- Hàng 8: Dấu bằng rộng full -->
+                <input type="button" value="=" onclick="calculate('=')" class="equal operator">
                 </div>
+
             </form>
         </div>
     </div>

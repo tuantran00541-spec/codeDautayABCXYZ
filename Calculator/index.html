@@ -56,6 +56,7 @@
                 <input type="button" value="√" onclick="appendValue('sqrt(')" class="sqrt operator">
                 <input type="button" value="π" onclick="appendValue('pi')" class="sqrt operator">
                 <input type="button" value="e" onclick="appendValue('e')" class="sqrt operator">
+                <input type="button" value="%" onclick="percent('%')" class="sqrt operator">
 
                 <!-- Hàng 8: Dấu bằng rộng full -->
                 <input type="button" value="=" onclick="calculate('=')" class="equal operator">
@@ -83,6 +84,7 @@
             try{
                 let input = display.value;
                 if (!input) return;
+                input = input.replace(/%/g, '/100');
                 let token = tokenize(input);
                 if (!token) { display.value = 'error'; return; }
                 let rpn = shuntingYard(token);
@@ -95,7 +97,7 @@
             }
         }
         function tokenize(input){
-        return input.match(/\d*\.?\d+|[a-z]+|[-+/*^]|[()]||/g);
+        return input.match(/\d*\.?\d+|[a-z]+|[-+/*^]|[()]|/g);
         }
         function shuntingYard(token){
             let output = [];
@@ -181,6 +183,9 @@
                 }
             }
             return stack[0];
+        }
+        function percent(){
+            display.value +='%';
         }
     </script>
 </body>

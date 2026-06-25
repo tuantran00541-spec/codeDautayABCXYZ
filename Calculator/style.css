@@ -47,3 +47,10 @@ form input.operator{
     display:grid;
     grid-template-columns: repeat(4, 1fr);
 }
+#display {
+    width: 100%;
+    font-size: 30px;
+    text-align: right;
+    overflow-x: auto;      
+    white-space: nowrap;    
+}

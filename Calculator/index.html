@@ -64,8 +64,10 @@
 
                 <!-- Hàng 9 -->
                 <input type="button" value="!" onclick="appendValue('!')" class="sqrt operator">
+                <input type="button" value="|x|" onclick="appendValue('abs(')" class="sqrt operator">
                 <input type="button" value="%" onclick="percent('%')" class="sqrt operator">
-                <input type="button" value="=" onclick="calculate('=')" class="equal operator" style="grid-column: span 2;">
+                <input type="button" value="ans" onclick="appendAns()" class="sqrt operator">
+                <input type="button" value="=" onclick="calculate('=')" class="equal operator">
             </div>
 
             </form>
@@ -74,6 +76,7 @@
     <script>
         const display = document.getElementById('display');
         let lichsu =[];
+        let ans = 0;
         function clearDisplay(){
             display.value ='';
             lichsu = [];
@@ -98,6 +101,7 @@
                 let result = evaluateRPN(rpn);
                 display.value = parseFloat(result.toFixed(10));
                 lichsu = [];
+                ans = result;
             } catch(e){
                 display.value = 'error';
             }
@@ -108,19 +112,24 @@
         function shuntingYard(token){
             let output = [];
             let operatorStack = [];
+            let prevToken = null;
             const precedence = {
                 '+':1,
                 '-':1,
                 '/':2,
                 '*':2,
                 '^':3,
-                '!':4};
+                '!':4,
+                'neg':4};
                 const rightAssociative = { '^': true };
                 for (let i =0; i < token.length; i++){
                 let t = token[i];
+                if (t ==="-" && (prevToken === null || prevToken === "(" || /[-+/*^]/.test(prevToken) ||/[a-z]+/.test(prevToken))){
+                    t ='neg';
+                }
                 if (/\d+\.?\d*/.test(t)){
                     output.push(t);
-                } else if (/[a-z]+/.test(t)){
+                } else if (/[a-z]+/.test(t) || t === "neg"){
                     operatorStack.push(t);
                 } else if(t ==="("){
                     operatorStack.push(t);
@@ -142,6 +151,7 @@
                     }
                     operatorStack.push(t);
                 } 
+                prevToken = t;
                 }
                 while(operatorStack.length > 0){
                     output.push(operatorStack.pop());
@@ -177,7 +187,7 @@
                     if (t ==="sin"){
                         stack.push(Math.sin(a*Math.PI/180));
                     }else if (t === "cos"){
-                        stack.pus(Math.cos(a*Math.PI/180));
+                        stack.push(Math.cos(a*Math.PI/180));
                     }else if ( t ==="log"){
                         stack.push(Math.log10(a));
                     }else if ( t ==="sqrt"){
@@ -196,6 +206,10 @@
                         stack.push(a*a*a);
                     }else if (t ==="inv"){
                         stack.push(1/a);
+                    }else if (t ==="abs"){
+                        stack.push(Math.abs(a));
+                    }else  if( t ==="neg"){
+                        stack.push(-a);
                     }
                 }
             }
@@ -211,6 +225,9 @@
                 result *= i;
             }
             return result;
+        }
+        function appendAns(){
+            display.value += ans;
         }
     </script>
 </body>

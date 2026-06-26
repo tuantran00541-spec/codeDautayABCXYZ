@@ -13,14 +13,14 @@
                 <div class="display">
                     <input type="text" name="display" id="display">
                 </div>
-                <div class="button">
-                      <!-- Hàng 1: Chức năng -->
+              <div class="button">
+                <!-- Hàng 1: Chức năng -->
                 <input type="button" class="operator" value="AC" onclick="clearDisplay()">
                 <input type="button" class="operator" value="DE" onclick="deleteLast()">
                 <input type="button" value="(" onclick="appendValue('(')" class="operator">
                 <input type="button" value=")" onclick="appendValue(')')" class="operator">
 
-                <!-- Hàng 2: Số + toán tử -->
+                <!-- Hàng 2 -->
                 <input type="button" value="7" onclick="appendValue('7')">
                 <input type="button" value="8" onclick="appendValue('8')">
                 <input type="button" value="9" onclick="appendValue('9')">
@@ -44,23 +44,29 @@
                 <input type="button" class="operator" value="." onclick="appendValue('.')">
                 <input type="button" value="+" onclick="appendValue('+')" class="operator">
 
-                <!-- Hàng 6: Hàm lượng giác -->
+                <!-- Hàng 6 -->
+                <input type="button" value="^" onclick="appendValue('^')" class="mu operator">
+                <input type="button" value="√" onclick="appendValue('sqrt(')" class="sqrt operator">
+                <input type="button" value="x²" onclick="appendValue('sq(')" class="sqrt operator">
+                <input type="button" value="x³" onclick="appendValue('cb(')" class="sqrt operator">
+
+                <!-- Hàng 7 -->
                 <input type="button" value="sin" onclick="appendValue('sin(')" class="sqrt operator">
                 <input type="button" value="cos" onclick="appendValue('cos(')" class="sqrt operator">
                 <input type="button" value="tan" onclick="appendValue('tan(')" class="sqrt operator">
-                <input type="button" value="^" onclick="appendValue('^')" class="mu operator">
+                <input type="button" value="1/x" onclick="appendValue('inv(')" class="sqrt operator">
 
-                <!-- Hàng 7: Hàm khác -->
+                <!-- Hàng 8 -->
                 <input type="button" value="log" onclick="appendValue('log(')" class="sqrt operator">
                 <input type="button" value="ln" onclick="appendValue('ln(')" class="sqrt operator">
-                <input type="button" value="√" onclick="appendValue('sqrt(')" class="sqrt operator">
                 <input type="button" value="π" onclick="appendValue('pi')" class="sqrt operator">
                 <input type="button" value="e" onclick="appendValue('e')" class="sqrt operator">
-                <input type="button" value="%" onclick="percent('%')" class="sqrt operator">
 
-                <!-- Hàng 8: Dấu bằng rộng full -->
-                <input type="button" value="=" onclick="calculate('=')" class="equal operator">
-                </div>
+                <!-- Hàng 9 -->
+                <input type="button" value="!" onclick="appendValue('!')" class="sqrt operator">
+                <input type="button" value="%" onclick="percent('%')" class="sqrt operator">
+                <input type="button" value="=" onclick="calculate('=')" class="equal operator" style="grid-column: span 2;">
+            </div>
 
             </form>
         </div>
@@ -90,14 +96,14 @@
                 let rpn = shuntingYard(token);
                 console.log('RPN:', rpn);
                 let result = evaluateRPN(rpn);
-                display.value = result;
+                display.value = parseFloat(result.toFixed(10));
                 lichsu = [];
             } catch(e){
                 display.value = 'error';
             }
         }
         function tokenize(input){
-        return input.match(/\d*\.?\d+|[a-z]+|[-+/*^]|[()]|/g);
+        return input.match(/\d*\.?\d+|[a-z]+|[-+/*^!]|[()]/g);
         }
         function shuntingYard(token){
             let output = [];
@@ -107,7 +113,8 @@
                 '-':1,
                 '/':2,
                 '*':2,
-                '^':3};
+                '^':3,
+                '!':4};
                 const rightAssociative = { '^': true };
                 for (let i =0; i < token.length; i++){
                 let t = token[i];
@@ -126,7 +133,7 @@
                     if (operatorStack.length > 0 && /[a-z]+/.test(operatorStack[operatorStack.length - 1])) {
                         output.push(operatorStack.pop());
                     }
-                } else if (/[-+/*^]/.test(t)){
+                } else if (/[-+/*^!]/.test(t)){
                     while(operatorStack.length > 0 && operatorStack[operatorStack.length - 1] !=="(" && (rightAssociative[t] 
                              ? precedence[operatorStack[operatorStack.length - 1]] > precedence[t]
                              : precedence[operatorStack[operatorStack.length - 1]] >= precedence[t])
@@ -147,7 +154,11 @@
                 let t =rpn[i];
                 if (!isNaN(parseFloat(t))){
                     stack.push(parseFloat(t));
-                }else if (/[-+/*^]/.test(t)){
+                }else if (t ==="!"){
+                    let a = stack.pop();
+                    stack.push(factorial(a));
+                }
+                else if (/[-+/*^]/.test(t)){
                    let b = stack.pop();
                    let a = stack.pop();
                    if (t ==="+"){
@@ -164,21 +175,27 @@
                 }else if (/[a-z]+/.test(t)){
                     let a = stack.pop();
                     if (t ==="sin"){
-                        stack.push(parseFloat(Math.sin(a*Math.PI/180).toFixed(10)));
+                        stack.push(Math.sin(a*Math.PI/180));
                     }else if (t === "cos"){
-                        stack.push(parseFloat(Math.cos(a*Math.PI/180).toFixed(10)));
+                        stack.pus(Math.cos(a*Math.PI/180));
                     }else if ( t ==="log"){
                         stack.push(Math.log10(a));
                     }else if ( t ==="sqrt"){
                         stack.push(Math.sqrt(a));
                     }else if (t ==="tan"){
-                        stack.push(parseFloat(Math.tan(a*Math.PI/180).toFixed(10)));
+                        stack.push(Math.tan(a*Math.PI/180));
                     }else if (t ==="ln"){
                         stack.push(Math.log(a));
                     }else if (t ==="e"){
                         stack.push(Math.E);
                     }else if (t ==="pi"){
                         stack.push(Math.PI);
+                    }else if (t ==="sq"){
+                        stack.push(a * a);
+                    }else if (t ==="cb"){
+                        stack.push(a*a*a);
+                    }else if (t ==="inv"){
+                        stack.push(1/a);
                     }
                 }
             }
@@ -186,6 +203,14 @@
         }
         function percent(){
             display.value +='%';
+        }
+        function factorial(a){
+            if (a === 0 || a === 1) return 1;
+            let result = 1;
+            for(let i =2; i <= a; i++){
+                result *= i;
+            }
+            return result;
         }
     </script>
 </body>

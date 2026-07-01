@@ -1,0 +1,180 @@
+* {
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.container {
+  display: flex;
+  justify-content:center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  min-height: auto;
+  perspective: 800px;
+  padding: 2rem;
+}
+
+.card-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.flashcard {
+  width: 200px;
+  height: 220px;
+  padding: 30px;
+  border-radius: 15px;
+  border: 1px solid #ccc;
+  background-color: aquamarine;
+  color: rgb(179, 131, 70);
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+  position: relative;
+}
+
+.card-front,
+.card-back {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
+  padding: 20px;
+  color: black;
+  backface-visibility: hidden;
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+}
+
+.card-front {
+  background-color: aquamarine;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+  background-color: brown;
+}
+
+.flashcard.flipped {
+  transform: rotateY(180deg);
+}
+
+/* Nút X – luôn đứng yên, không bị lật */
+.del-card {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: blue;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease; /* mượt khi ẩn/hiện */
+  pointer-events: auto;
+}
+
+.del-card:hover {
+  color: red;
+  transform: scale(1.2);
+}
+
+/* Ẩn nút X khi thẻ đang xoay */
+.card-wrapper.hide-del .del-card {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Hiệu ứng shuffle */
+.flashcard.shuffling {
+  transition: transform 0.4s ease, opacity 0.3s ease;
+  opacity: 0;
+  transform: rotateY(180deg) scale(0.8);
+}
+
+/* Form nhập liệu */
+.form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 40px;
+}
+
+.input-row {
+  display: flex;
+  gap: 2rem;
+}
+
+.form-container input {
+  width: 200px;
+  padding: 10px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  font-size: 20px;
+}
+
+.form-container input::placeholder {
+  color: #999;
+}
+
+#add-btn,
+#tron-btn {
+  padding: 10px 20px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#add-btn:hover,
+#tron-btn:hover {
+  background: #f0f0f0;
+}
+
+#deck-select{
+  font-size: 20px;
+  border-radius: 15px;
+  margin:10px;
+  cursor:pointer;
+}
+#deck-select:hover{
+  background:#f0f0f0;
+}
+.btn-row{
+  display:flex;
+  align-items: center;
+  gap:1rem;
+}
+#reset-btn{
+  font-size: 20px;
+  background:white;
+  border:1px solid;
+  border-radius: 10px;
+  padding:10px;
+  cursor:pointer;
+}
+#reset-btn:hover{
+  background:#f0f0f0;
+}
+#card-count{
+  font-size: 25px;
+  display:flex;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-decoration:underline ;
+  }
+
+  html,body{
+    min-height: 100vh;
+  }

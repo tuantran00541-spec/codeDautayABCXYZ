@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>FlashCard</title>
+</head>
+<body>
+  <div class="form-container">
+    <div class="input-row">
+    <input type="text" id="front-input" placeholder="Mặt Trước">
+    <input type="text" id="front-back" placeholder="Mặt Sau">
+    <p id="card-count">Số Thẻ: 0</p>
+    </div>
+    <div class="btn-row">
+    <button id="add-btn">Thêm Card</button>
+    <button id="tron-btn">Trộn thẻ</button>
+    <button id="reset-btn">Reset</button>
+    <select id="deck-select">
+      <option value="">Click Here</option>
+      <option value="mau">Color</option>
+      <option value="dongvat">Animal</option>
+    </select>
+    </div>
+  </div>
+
+<!-----------------Thẻ Thêm Ở Đây---------------------->  
+    <div class="container">
+    <!-- Card 1 -->
+    <div class="card-wrapper">
+      <button class="del-card">✕</button>
+      <div class="flashcard" id="card-1">
+        <div class="card-front"><p>Blue</p></div>
+        <div class="card-back"><p>Yellow</p></div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="card-wrapper">
+      <button class="del-card">✕</button>
+      <div class="flashcard" id="card-2">
+        <div class="card-front"><p>Khô</p></div>
+        <div class="card-back"><p>gà</p></div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="card-wrapper">
+      <button class="del-card">✕</button>
+      <div class="flashcard" id="card-3">
+        <div class="card-front"><p>bã</p></div>
+        <div class="card-back"><p>mía</p></div>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="card-wrapper">
+      <button class="del-card">✕</button>
+      <div class="flashcard" id="card-4">
+        <div class="card-front"><p>Đè</p></div>
+        <div class="card-back"><p>Tem</p></div>
+      </div>
+    </div>
+  </div>
+<!------------------------------------------------------>
+
+  <script src="script.js"></script>
+</body>
+</html>

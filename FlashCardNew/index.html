@@ -18,10 +18,27 @@
     <button id="tron-btn">Trộn thẻ</button>
     <button id="reset-btn">Reset</button>
     <select id="deck-select">
-      <option value="">Click Here</option>
+      <option value="" >Click Here</option>
       <option value="mau">Color</option>
       <option value="dongvat">Animal</option>
+      <option value="Them" id="them-option">Tạo Thẻ</option>
     </select>
+    <button id="delete-deck-btn" class="hidden" title="Xóa bộ thẻ này">🗑</button>
+    </div>
+  </div>
+
+
+    <!-- Model Tạo Bộ Thẻ Mới -->
+  <div id="create-deck-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>Tạo Bộ Thẻ Mới</h2>
+      <input type="text" id="new-deck-name" placeholder="Tên bộ thẻ (VD: Đồ ăn)">
+      <div id="new-deck-cards"></div>
+      <button id="add-deck-card-row" type="button">+ Thêm thẻ</button>
+      <div class="modal-actions">
+        <button id="save-deck-btn" type="button">Lưu bộ thẻ</button>
+        <button id="cancel-deck-btn" type="button">Hủy</button>
+      </div>
     </div>
   </div>
 

@@ -36,6 +36,14 @@ const defaultCards = [
   { front: 'Đè', back: 'Tem' }
 ];
 
+// Kiểm tra xem Mặt Trước đã tồn tại trong các thẻ hiện có chưa (không phân biệt hoa/thường, khoảng trắng thừa)
+function isDuplicateFront(frontValue) {
+  const normalized = frontValue.trim().toLowerCase();
+  const existingFronts = Array.from(document.querySelectorAll('.card-front'))
+    .map(el => el.textContent.trim().toLowerCase());
+  return existingFronts.includes(normalized);
+}
+
 
 document.querySelector('.container').addEventListener('click', function (e) {
   // Delete Card
@@ -92,6 +100,10 @@ document.querySelector('#add-btn').addEventListener('click', function () {
     return;
   }
 
+  if (isDuplicateFront(frontValue)) {
+    alert(`Thẻ "${frontValue}" đã tồn tại! Vẫn sẽ thêm thẻ mới này.`);
+  }
+
   const wrapper = document.createElement('div');
   wrapper.classList.add('card-wrapper');
   wrapper.innerHTML = `
@@ -99,6 +111,9 @@ document.querySelector('#add-btn').addEventListener('click', function () {
     <div class="flashcard">
       <div class="card-front">${frontValue}</div>
       <div class="card-back">${backValue}</div>
+    </div>
+    <div class="quiz-box">
+      <input type="text" class="quiz-input" placeholder="Nhập đáp án...">
     </div>
   `;
 
@@ -158,6 +173,9 @@ function createCardWrapper(front, back) {
     <div class="flashcard">
       <div class="card-front">${front}</div>
       <div class="card-back">${back}</div>
+    </div>
+    <div class="quiz-box">
+      <input type="text" class="quiz-input" placeholder="Nhập đáp án...">
     </div>
   `;
   return wrapper;
@@ -345,6 +363,14 @@ document.querySelector('#save-deck-btn').addEventListener('click', () => {
     return;
   }
 
+  const duplicateFronts = cards
+    .filter(({ front }) => isDuplicateFront(front))
+    .map(({ front }) => front);
+
+  if (duplicateFronts.length > 0) {
+    alert(`Các thẻ sau đã trùng Mặt Trước với thẻ hiện có: ${duplicateFronts.join(', ')}. Vẫn sẽ lưu bộ thẻ này.`);
+  }
+
   const customDecks = loadCustomDecks();
   const isUpdate = Object.prototype.hasOwnProperty.call(customDecks, deckName);
   customDecks[deckName] = cards;
@@ -380,3 +406,31 @@ loadCards();
 updateCardCount();
 applyRandomSeason();
 renderCustomDeckOptions();
+
+// ---------- Chế Độ Kiểm Tra ----------
+const quizModeBtn = document.querySelector('#quiz-mode-btn');
+const mainContainer = document.querySelector('.container');
+
+quizModeBtn.addEventListener('click', () => {
+  const isActive = mainContainer.classList.toggle('quiz-mode');
+  quizModeBtn.classList.toggle('active', isActive);
+  quizModeBtn.textContent = isActive ? 'Tắt Chế Độ Kiểm Tra' : 'Chế Độ Kiểm Tra';
+});
+
+// Gõ đáp án + Enter -> so sánh với Mặt Sau -> tô màu đúng/sai -> lật thẻ
+mainContainer.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || !e.target.classList.contains('quiz-input')) return;
+
+  const input = e.target;
+  const wrapper = input.closest('.card-wrapper');
+  const card = wrapper.querySelector('.flashcard');
+  const backText = wrapper.querySelector('.card-back').textContent.trim().toLowerCase();
+  const userAnswer = input.value.trim().toLowerCase();
+
+  input.classList.remove('correct', 'wrong');
+  input.classList.add(userAnswer === backText ? 'correct' : 'wrong');
+
+  if (!card.classList.contains('flipped')) {
+    card.classList.add('flipped');
+  }
+});

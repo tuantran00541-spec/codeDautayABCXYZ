@@ -336,3 +336,51 @@
     padding:1rem;
   }
 }
+
+#quiz-mode-btn {
+  font-size: 16px;
+  background: white;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+ 
+#quiz-mode-btn:hover {
+  background: #f0f0f0;
+}
+ 
+#quiz-mode-btn.active {
+  background: #333;
+  color: white;
+}
+ 
+.quiz-box {
+  display: none;
+  margin-top: 8px;
+}
+ 
+.container.quiz-mode .quiz-box {
+  display: block;
+}
+ 
+.quiz-input {
+  width: 200px;
+  padding: 8px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  font-size: 15px;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+ 
+.quiz-input.correct {
+  border-color: #00ff0d;
+  background: #00ff15;
+}
+ 
+.quiz-input.wrong {
+  border-color: #ff0000;
+  background: #ff0026;
+}

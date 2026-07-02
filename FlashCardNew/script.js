@@ -177,19 +177,191 @@ function loadCards() {
     container.appendChild(createCardWrapper(front, back));
   });
 }
+// ---------- Bộ thẻ tùy chỉnh (do người dùng tạo) ----------
+function loadCustomDecks() {
+  const raw = localStorage.getItem('customDecks');
+  return raw ? JSON.parse(raw) : {};
+}
+
+function saveCustomDecks(decks) {
+  localStorage.setItem('customDecks', JSON.stringify(decks));
+}
+
+// Render các bộ thẻ tùy chỉnh vào select, chèn ngay trước mục "+ Tạo Thẻ Mới"
+function renderCustomDeckOptions() {
+  const select = document.querySelector('#deck-select');
+  const themOption = document.querySelector('#them-option');
+
+  // Xóa các option custom cũ (đánh dấu bằng data-custom="true") để tránh trùng lặp
+  select.querySelectorAll('option[data-custom="true"]').forEach(opt => opt.remove());
+
+  const customDecks = loadCustomDecks();
+  Object.keys(customDecks).forEach(deckName => {
+    const opt = document.createElement('option');
+    opt.value = `custom:${deckName}`;
+    opt.textContent = deckName;
+    opt.dataset.custom = 'true';
+    select.insertBefore(opt, themOption);
+  });
+}
+
+const deleteDeckBtn = document.querySelector('#delete-deck-btn');
+let currentCustomDeckName = null; // tên bộ thẻ tùy chỉnh đang được chọn (nếu có)
+
 document.querySelector('#deck-select').addEventListener('change', function () {
   const deckKey = this.value;
-  if (!deckKey || !deckPresets[deckKey]) return;
+  const container = document.querySelector('.container');
+
+  if (!deckKey) return;
+
+  // Mở modal tạo bộ thẻ mới
+  if (deckKey === 'Them') {
+    openCreateDeckModal();
+    this.value = '';
+    return;
+  }
+
+  // Bộ thẻ tùy chỉnh do người dùng lưu trước đó
+  if (deckKey.startsWith('custom:')) {
+    const deckName = deckKey.slice('custom:'.length);
+    const customDecks = loadCustomDecks();
+    const cards = customDecks[deckName];
+    if (!cards) return;
+
+    container.innerHTML = '';
+    cards.forEach(({ front, back }) => {
+      container.appendChild(createCardWrapper(front, back));
+    });
+    saveCards();
+
+    // Bộ thẻ tùy chỉnh -> hiện nút xóa
+    currentCustomDeckName = deckName;
+    deleteDeckBtn.classList.remove('hidden');
+
+    this.value = '';
+    return;
+  }
+
+  // Bộ thẻ có sẵn (mau, dongvat, ...) -> ẩn nút xóa
+  if (deckPresets[deckKey]) {
+    container.innerHTML = '';
+    deckPresets[deckKey].forEach(({ front, back }) => {
+      container.appendChild(createCardWrapper(front, back));
+    });
+    saveCards();
+
+    currentCustomDeckName = null;
+    deleteDeckBtn.classList.add('hidden');
+
+    this.value = '';
+  }
+});
+
+deleteDeckBtn.addEventListener('click', () => {
+  if (!currentCustomDeckName) return;
+
+  const confirmDelete = confirm(`Xóa bộ thẻ "${currentCustomDeckName}"? Hành động này không thể hoàn tác.`);
+  if (!confirmDelete) return;
+
+  const customDecks = loadCustomDecks();
+  delete customDecks[currentCustomDeckName];
+  saveCustomDecks(customDecks);
+  renderCustomDeckOptions();
+
+  currentCustomDeckName = null;
+  deleteDeckBtn.classList.add('hidden');
+});
+
+// ---------- Modal Tạo Bộ Thẻ Mới ----------
+const createDeckModal = document.querySelector('#create-deck-modal');
+const newDeckCardsWrap = document.querySelector('#new-deck-cards');
+const newDeckNameInput = document.querySelector('#new-deck-name');
+
+function createDeckRow(front = '', back = '') {
+  const row = document.createElement('div');
+  row.classList.add('new-deck-row');
+  row.innerHTML = `
+    <input type="text" class="new-deck-front" placeholder="Mặt Trước" value="${front}">
+    <input type="text" class="new-deck-back" placeholder="Mặt Sau" value="${back}">
+    <button type="button" class="remove-row-btn" title="Xóa dòng">✕</button>
+  `;
+  row.querySelector('.remove-row-btn').addEventListener('click', () => {
+    // Luôn giữ lại ít nhất 1 dòng
+    if (newDeckCardsWrap.children.length > 1) {
+      row.remove();
+    } else {
+      row.querySelector('.new-deck-front').value = '';
+      row.querySelector('.new-deck-back').value = '';
+    }
+  });
+  return row;
+}
+
+function openCreateDeckModal() {
+  newDeckNameInput.value = '';
+  newDeckCardsWrap.innerHTML = '';
+  // Bắt đầu với 3 dòng trống cho tiện nhập
+  for (let i = 0; i < 3; i++) {
+    newDeckCardsWrap.appendChild(createDeckRow());
+  }
+  createDeckModal.classList.remove('hidden');
+  newDeckNameInput.focus();
+}
+
+function closeCreateDeckModal() {
+  createDeckModal.classList.add('hidden');
+  document.querySelector('#deck-select').value = '';
+}
+
+document.querySelector('#add-deck-card-row').addEventListener('click', () => {
+  newDeckCardsWrap.appendChild(createDeckRow());
+});
+
+document.querySelector('#cancel-deck-btn').addEventListener('click', closeCreateDeckModal);
+
+// Bấm ra ngoài modal để hủy
+createDeckModal.addEventListener('click', (e) => {
+  if (e.target === createDeckModal) closeCreateDeckModal();
+});
+
+document.querySelector('#save-deck-btn').addEventListener('click', () => {
+  const deckName = newDeckNameInput.value.trim();
+  if (!deckName) {
+    alert('Vui lòng đặt tên cho bộ thẻ');
+    newDeckNameInput.focus();
+    return;
+  }
+
+  const rows = Array.from(newDeckCardsWrap.querySelectorAll('.new-deck-row'));
+  const cards = rows
+    .map(row => ({
+      front: row.querySelector('.new-deck-front').value.trim(),
+      back: row.querySelector('.new-deck-back').value.trim()
+    }))
+    .filter(({ front, back }) => front && back);
+
+  if (cards.length === 0) {
+    alert('Vui lòng nhập ít nhất 1 thẻ đầy đủ (cả 2 mặt)');
+    return;
+  }
+
+  const customDecks = loadCustomDecks();
+  const isUpdate = Object.prototype.hasOwnProperty.call(customDecks, deckName);
+  customDecks[deckName] = cards;
+  saveCustomDecks(customDecks);
+  renderCustomDeckOptions();
+
+  createDeckModal.classList.add('hidden');
 
   const container = document.querySelector('.container');
-  container.innerHTML = ''; // xóa thẻ hiện tại
-
-  deckPresets[deckKey].forEach(({ front, back }) => {
+  container.innerHTML = '';
+  cards.forEach(({ front, back }) => {
     container.appendChild(createCardWrapper(front, back));
   });
+  saveCards();
 
-  saveCards(); 
-  this.value = ''; 
+  document.querySelector('#deck-select').value = '';
+  alert(`Đã ${isUpdate ? 'cập nhật' : 'lưu'} bộ thẻ "${deckName}"!`);
 });
 
 
@@ -207,3 +379,4 @@ document.querySelector('#reset-btn').addEventListener('click', function () {
 loadCards();
 updateCardCount();
 applyRandomSeason();
+renderCustomDeckOptions();

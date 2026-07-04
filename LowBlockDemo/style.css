@@ -25,6 +25,12 @@
 .cell.filled{
   background:#4caf50;
 }
+.cell.preview{
+  background:#a5d6a7; /* xanh nhạt: đây là chỗ khối sẽ nằm nếu thả ra */
+}
+.cell.preview-invalid{
+  background:#ef9a9a; /* đỏ nhạt: báo không đặt được ở đây */
+}
 .tray{
   display:flex;
   gap:20px;
@@ -38,6 +44,7 @@
   align-items: center;
   justify-content: center;
   cursor:pointer;
+  touch-action: none; /* tránh trình duyệt cuộn trang khi đang kéo khối trên cảm ứng */
 
 }
 .block-slot.selected{
@@ -67,22 +74,6 @@ body{
   background: #4caf50;
   border-radius: 3px;
 }
-.rotate-btn{
-  border:1px solid black;
-  border-radius: 50px;
-  width: 60px;
-  height: 60px;
-  background:rgb(161, 161, 117);
-  font-size: 30px;
-  position:relative;
-  left:260px;
-  top:190px;
-  display:flex;
-  align-items: center;
-  justify-content: center;
-  cursor:pointer;
-}
-
 #maxScore{
   position:relative;
   right:80px;
@@ -149,17 +140,5 @@ body{
   to {
     transform: scale(1);
     opacity: 1;
-  }
-}
-.mini-grid.rotating {
-  animation: rotateEffect 0.1s ease;
-}
-
-@keyframes rotateEffect {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(90deg);
   }
 }

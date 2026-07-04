@@ -131,64 +131,81 @@ slots.forEach((slotEl, slotIndex) => {
 });
 
 // ============================================
-// BƯỚC 3: ĐẶT KHỐI VÀO LƯỚI KHI BẤM 1 Ô
+// BƯỚC 3: ĐẶT KHỐI VÀO LƯỚI (dùng chung cho cả CLICK và KÉO-THẢ)
 // ============================================
-cells.forEach((cellEl, cellIndex) => {
-  cellEl.addEventListener('click', () => {
-    if (selectedSlot === null) return;
+// Hàm này chứa nguyên logic đặt khối cũ, chỉ tách ra để tái sử dụng được
+// từ 2 nguồn sự kiện khác nhau (click vào ô, hoặc thả khối lên ô khi kéo).
+// Trả về true nếu đặt thành công, false nếu không đặt được.
+function tryPlaceBlock(slotIndex, cellIndex) {
+  const shape = trayBlocks[slotIndex];
+  if (!shape) return false;
 
-    const shape = trayBlocks[selectedSlot];
-    const { row: clickRow, col: clickCol } = indexToRowCol(cellIndex);
+  const { row: clickRow, col: clickCol } = indexToRowCol(cellIndex);
 
-    // Tìm toạ độ nhỏ nhất (góc trên-trái thực sự) của shape để dùng làm điểm neo
-    const minRow = Math.min(...shape.map(([r]) => r));
-    const minCol = Math.min(...shape.map(([, c]) => c));
+  // BUG CŨ: luôn coi ô bấm là ô (0,0) lý thuyết của shape (sau khi trừ minRow/minCol),
+  // nên nếu người chơi bấm vào 1 ô KHÁC của khối (không phải ô góc trên-trái),
+  // vị trí đặt sẽ bị lệch -> báo không đặt được dù nhìn có vẻ vừa khít.
+  //
+  // SỬA: thử coi ô bấm/thả là từng ô một trong shape (không chỉ ô đầu tiên),
+  // hễ có cách nào khớp và hợp lệ thì dùng cách đó luôn.
+  let targetCells = null;
 
-    // Ô người chơi bấm sẽ luôn được hiểu là góc trên-trái thực sự của hình
-    const baseRow = clickRow - minRow;
-    const baseCol = clickCol - minCol;
+  for (const [anchorDr, anchorDc] of shape) {
+    const baseRow = clickRow - anchorDr;
+    const baseCol = clickCol - anchorDc;
 
-    const targetCells = shape.map(([dr, dc]) => ({
+    const candidateCells = shape.map(([dr, dc]) => ({
       row: baseRow + dr,
       col: baseCol + dc
     }));
 
-    // Kiểm tra xem có đặt được không:
-    // 1. Không có ô nào vượt ra ngoài lưới (row/col phải từ 0 đến 5)
-    // 2. Không có ô nào đè lên ô đã filled sẵn
-    const canPlace = targetCells.every(({ row, col }) => {
+    const isValid = candidateCells.every(({ row, col }) => {
       const inBounds = row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE;
       if (!inBounds) return false;
-      const index = rowColToIndex(row, col);
-      return !boardState[index]; // phải là ô trống (false)
+      return !boardState[rowColToIndex(row, col)];
     });
 
-    if (!canPlace) {
-      // Có thể thêm hiệu ứng rung lắc báo lỗi ở đây nếu muốn, tạm thời bỏ qua
-      return;
+    // Ưu tiên cách neo mà ô được bấm/thả chính là 1 ô thuộc khối và hợp lệ
+    if (isValid) {
+      targetCells = candidateCells;
+      break;
     }
+  }
 
-    // Đặt khối: đánh dấu các ô liên quan là true trong boardState
-    targetCells.forEach(({ row, col }) => {
-      boardState[rowColToIndex(row, col)] = true;
-    });
+  if (!targetCells) {
+    // Không có cách neo nào hợp lệ -> thực sự không đặt được ở đây
+    return false;
+  }
 
-    // Xoá khối này khỏi tray (đánh dấu slot đã dùng)
-    trayBlocks[selectedSlot] = null;
-    selectedSlot = null;
+  // Đặt khối: đánh dấu các ô liên quan là true trong boardState
+  targetCells.forEach(({ row, col }) => {
+    boardState[rowColToIndex(row, col)] = true;
+  });
 
-    renderBoard();  // vẽ lại lưới theo boardState mới
-    renderTray();   // vẽ lại tray (slot vừa dùng sẽ trống)
-    clearFullLines(); // kiểm tra hàng/cột đầy để xoá + cộng điểm
+  // Xoá khối này khỏi tray (đánh dấu slot đã dùng)
+  trayBlocks[slotIndex] = null;
+  selectedSlot = null;
 
-    // Nếu cả 3 slot đều đã dùng hết -> ra bộ khối mới
-    if (trayBlocks.every(b => b === null)) {
-      generateNewTray();
-    } else {
-      checkGameOver();
-    }
+  renderBoard();  // vẽ lại lưới theo boardState mới
+  renderTray();   // vẽ lại tray (slot vừa dùng sẽ trống)
+  clearFullLines(); // kiểm tra hàng/cột đầy để xoá + cộng điểm
 
-    saveGameState();
+  // Nếu cả 3 slot đều đã dùng hết -> ra bộ khối mới
+  if (trayBlocks.every(b => b === null)) {
+    generateNewTray();
+  } else {
+    checkGameOver();
+  }
+
+  saveGameState();
+  return true;
+}
+
+// Click vào ô lưới: vẫn giữ lại cách chọn-rồi-bấm như cũ (không bắt buộc phải kéo thả)
+cells.forEach((cellEl, cellIndex) => {
+  cellEl.addEventListener('click', () => {
+    if (selectedSlot === null) return;
+    tryPlaceBlock(selectedSlot, cellIndex);
   });
 });
 
@@ -296,66 +313,6 @@ function checkGameOver() {
 }
 }
 
-// ============================================
-// HÀM XOAY 1 SHAPE 90 ĐỘ (THEO CHIỀU KIM ĐỒNG HỒ)
-// ============================================
-function rotateShape(shape) {
-  // Công thức xoay 90 độ: (row, col) -> (col, maxRow - row)
-  const maxRow = Math.max(...shape.map(([r]) => r));
-
-  const rotated = shape.map(([r, c]) => [c, maxRow - r]);
-
-  // Chuẩn hoá lại để toạ độ luôn bắt đầu từ (0,0) trở đi (tránh số âm)
-  const minRow = Math.min(...rotated.map(([r]) => r));
-  const minCol = Math.min(...rotated.map(([, c]) => c));
-
-  return rotated.map(([r, c]) => [r - minRow, c - minCol]);
-}
-
-// ============================================
-// XOAY KHỐI ĐANG ĐƯỢC CHỌN TRONG TRAY
-// ============================================
-const rotateBtn = document.querySelector('#rotate');
-
-rotateBtn.addEventListener('click', () => {
-  if (selectedSlot === null) return;
-
-  const currentShape = trayBlocks[selectedSlot];
-  if (!currentShape) return;
-
-  const slotEl = slots[selectedSlot];
-  const miniGrid = slotEl.querySelector('.mini-grid');
-
-  if (miniGrid) {
-    // Bước 1: cho xoay đi trước (chỉ là hiệu ứng, chưa đổi hình)
-    miniGrid.style.transition = 'transform 0.15s ease';
-    miniGrid.style.transform = 'rotate(90deg) scale(0.8)';
-
-    // Bước 2: sau khi xoay xong nửa chặng, đổi hình thật + xoay về vị trí gốc
-    setTimeout(() => {
-      trayBlocks[selectedSlot] = rotateShape(currentShape);
-      renderTray();
-      slots[selectedSlot].classList.add('selected');
-
-      const newMiniGrid = slots[selectedSlot].querySelector('.mini-grid');
-      if (newMiniGrid) {
-        newMiniGrid.style.transform = 'rotate(-90deg) scale(0.8)';
-        // ép trình duyệt tính lại layout trước khi chuyển tiếp (để transition chạy đúng)
-        newMiniGrid.offsetHeight;
-        newMiniGrid.style.transform = 'rotate(0deg) scale(1)';
-      }
-
-      saveGameState();
-    }, 150);
-  } else {
-    // Trường hợp không tìm thấy miniGrid, vẫn xoay bình thường
-    trayBlocks[selectedSlot] = rotateShape(currentShape);
-    renderTray();
-    slots[selectedSlot].classList.add('selected');
-    saveGameState();
-  }
-});
-
 const maxScoreEl = document.querySelector('#maxScore');
 // Lấy điểm cao nhất đã lưu trong trình duyệt (nếu chưa từng lưu thì mặc định 0)
 let maxScore = Number(localStorage.getItem('maxScore')) || 0;
@@ -417,6 +374,171 @@ function loadGameState() {
 
 function clearGameState() {
   localStorage.removeItem('gameState');
+}
+
+// ============================================
+// KÉO-THẢ (DRAG & DROP) KHỐI TỪ TRAY VÀO LƯỚI
+// ============================================
+// Dùng Pointer Events vì nó gộp chung được cả chuột lẫn cảm ứng (touch),
+// không cần xử lý riêng mousedown/touchstart như kiểu cũ.
+// Toàn bộ logic đặt khối vẫn dùng lại tryPlaceBlock() ở trên, không đổi gì cả.
+
+let dragState = null; // { slotIndex, shape, ghostEl, pointerId, startX, startY, dragging }
+
+const DRAG_THRESHOLD = 6; // px di chuyển tối thiểu trước khi coi là "đang kéo" thật sự
+
+function getGridRect() {
+  return document.querySelector('.grid').getBoundingClientRect();
+}
+
+// Từ toạ độ con trỏ (clientX/clientY), tìm xem đang ở trên ô nào trong lưới.
+// Trả về index của ô (0-35), hoặc null nếu con trỏ đang ở ngoài lưới.
+function getCellIndexFromPoint(clientX, clientY) {
+  const el = document.elementFromPoint(clientX, clientY);
+  if (!el) return null;
+  const cellEl = el.closest('.cell');
+  if (!cellEl) return null;
+  return Array.from(cells).indexOf(cellEl);
+}
+
+// Tô sáng trước (preview) các ô mà khối SẼ chiếm nếu thả ngay tại đây,
+// dùng đúng thuật toán tìm điểm neo giống hệt tryPlaceBlock (không tách trùng
+// logic đặt khối thật, chỉ tính toán để hiển thị, không ghi vào boardState).
+function previewPlacement(shape, cellIndex) {
+  clearPreview();
+  if (cellIndex === null) return;
+
+  const { row: hoverRow, col: hoverCol } = indexToRowCol(cellIndex);
+
+  for (const [anchorDr, anchorDc] of shape) {
+    const baseRow = hoverRow - anchorDr;
+    const baseCol = hoverCol - anchorDc;
+
+    const candidateCells = shape.map(([dr, dc]) => ({
+      row: baseRow + dr,
+      col: baseCol + dc
+    }));
+
+    const isValid = candidateCells.every(({ row, col }) => {
+      const inBounds = row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE;
+      if (!inBounds) return false;
+      return !boardState[rowColToIndex(row, col)];
+    });
+
+    if (isValid) {
+      candidateCells.forEach(({ row, col }) => {
+        cells[rowColToIndex(row, col)].classList.add('preview');
+      });
+      return;
+    }
+  }
+
+  // Không có vị trí hợp lệ nào quanh ô đang hover -> báo đỏ ngay ô đó cho biết "không đặt được"
+  cells[cellIndex].classList.add('preview-invalid');
+}
+
+function clearPreview() {
+  cells.forEach(c => c.classList.remove('preview', 'preview-invalid'));
+}
+
+function createGhost(slotEl, x, y) {
+  const ghostEl = slotEl.querySelector('.mini-grid')?.cloneNode(true);
+  if (!ghostEl) return null;
+  ghostEl.style.position = 'fixed';
+  ghostEl.style.pointerEvents = 'none';
+  ghostEl.style.opacity = '0.75';
+  ghostEl.style.zIndex = '1000';
+  ghostEl.style.left = `${x}px`;
+  ghostEl.style.top = `${y}px`;
+  ghostEl.style.transform = 'translate(-50%, -50%) scale(1.1)';
+  document.body.appendChild(ghostEl);
+  return ghostEl;
+}
+
+slots.forEach((slotEl, slotIndex) => {
+  slotEl.addEventListener('pointerdown', (e) => {
+    if (!trayBlocks[slotIndex]) return;
+
+    // Chọn slot này luôn (đồng bộ với cơ chế click cũ, để nút xoay vẫn hoạt động đúng)
+    slots.forEach(s => s.classList.remove('selected'));
+    selectedSlot = slotIndex;
+    slotEl.classList.add('selected');
+
+    // CHƯA setPointerCapture và CHƯA tạo ghost ngay ở đây.
+    // Chỉ ghi nhận điểm bắt đầu; việc này để một cú bấm ngắn (chọn slot rồi
+    // bấm nút xoay) không bị "khoá" pointer vào slot, gây ra không bấm được nút xoay.
+    dragState = {
+      slotIndex,
+      shape: trayBlocks[slotIndex],
+      ghostEl: null,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      dragging: false
+    };
+  });
+
+  slotEl.addEventListener('pointermove', (e) => handlePointerMove(e, slotEl));
+  slotEl.addEventListener('pointerup', (e) => handlePointerUp(e, slotEl));
+  slotEl.addEventListener('pointercancel', () => cancelDrag(slotEl));
+});
+
+function handlePointerMove(e, slotEl) {
+  if (!dragState || dragState.pointerId !== e.pointerId) return;
+
+  const dx = e.clientX - dragState.startX;
+  const dy = e.clientY - dragState.startY;
+
+  // Chỉ khi di chuyển đủ xa mới coi là bắt đầu kéo thật sự.
+  // Trước ngưỡng này, đây vẫn chỉ là 1 cú "bấm chọn" bình thường,
+  // nên nút xoay bấm ngay sau đó vẫn hoạt động không bị pointer capture chặn.
+  if (!dragState.dragging) {
+    if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+
+    dragState.dragging = true;
+    slotEl.setPointerCapture(e.pointerId);
+    dragState.ghostEl = createGhost(slotEl, e.clientX, e.clientY);
+  }
+
+  if (dragState.ghostEl) {
+    dragState.ghostEl.style.left = `${e.clientX}px`;
+    dragState.ghostEl.style.top = `${e.clientY}px`;
+  }
+
+  const cellIndex = getCellIndexFromPoint(e.clientX, e.clientY);
+  previewPlacement(dragState.shape, cellIndex);
+}
+
+function handlePointerUp(e, slotEl) {
+  if (!dragState || dragState.pointerId !== e.pointerId) return;
+
+  const { slotIndex, ghostEl, dragging } = dragState;
+
+  if (dragging) {
+    // Chỉ thực sự thử đặt khối nếu người dùng ĐÃ kéo đi (vượt threshold).
+    // Một cú bấm ngắn không kéo sẽ không đặt khối nào cả, giữ đúng như hành vi chọn slot cũ.
+    const cellIndex = getCellIndexFromPoint(e.clientX, e.clientY);
+    clearPreview();
+    if (ghostEl) ghostEl.remove();
+    if (slotEl.hasPointerCapture(e.pointerId)) {
+      slotEl.releasePointerCapture(e.pointerId);
+    }
+    if (cellIndex !== null) {
+      tryPlaceBlock(slotIndex, cellIndex);
+    }
+  }
+
+  dragState = null;
+}
+
+function cancelDrag(slotEl) {
+  if (!dragState) return;
+  clearPreview();
+  if (dragState.ghostEl) dragState.ghostEl.remove();
+  if (dragState.dragging && dragState.pointerId != null && slotEl.hasPointerCapture?.(dragState.pointerId)) {
+    slotEl.releasePointerCapture(dragState.pointerId);
+  }
+  dragState = null;
 }
 
 // ============================================

@@ -258,9 +258,6 @@ body{
   }
 }
 
-/* .hidden luôn phải đặt CUỐI file (hoặc dùng !important) để chắc chắn thắng
-   mọi rule display khác đứng sau nó trong file, tránh bug ẩn không có tác dụng
-   khi 1 phần tử vừa có .hidden vừa có class khác cũng set display (ví dụ .game-wrapper). */
 .hidden {
   display: none !important;
 }

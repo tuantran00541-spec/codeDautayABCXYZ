@@ -6,6 +6,7 @@
 }
 
 .grid{
+  position:relative; /* làm điểm gốc toạ độ cho .score-popup (absolute) */
   display:grid;
   grid-template-columns: repeat(6, 50px);
   grid-template-rows: repeat(6, 50px);
@@ -13,7 +14,7 @@
   border:4px solid black;
   border-radius: 3px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  background:black;
+  background:#eee;
 }
 .cell{
   width: 50px;
@@ -22,6 +23,49 @@
   border-radius: 4px;
 
 }
+
+.container{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.log-in-load,
+.resume-choice,
+.instruction-box{
+  background:white;
+  padding:40px 60px;
+  border-radius:16px;
+  text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.log-in-load button,
+.resume-choice button,
+.instruction-box button{
+  font-size:20px;
+  padding:12px 30px;
+  border:none;
+  border-radius:8px;
+  background:#4caf50;
+  color:white;
+  cursor:pointer;
+}
+
+.log-in-load button:hover,
+.resume-choice button:hover,
+.instruction-box button:hover{
+  background:#43a047;
+}
+
 .cell.filled{
   background:#4caf50;
 }
@@ -30,6 +74,74 @@
 }
 .cell.preview-invalid{
   background:#ef9a9a; /* đỏ nhạt: báo không đặt được ở đây */
+}
+
+/* Hiệu ứng nổ hàng/cột: ô nổi lên (translateY âm + scale to nhẹ) rồi mờ dần và biến mất.
+   animation-delay được set bằng JS theo từng ô để tạo cảm giác gợn sóng lan dần. */
+.cell.clearing{
+  animation: cellPop 0.45s ease forwards;
+  z-index: 2;
+}
+
+@keyframes cellPop {
+  0% {
+    transform: translateY(0) scale(1);
+    background:#4caf50;
+  }
+  35% {
+    transform: translateY(-10px) scale(1.15);
+    background:#a5f5b0;
+  }
+  100% {
+    transform: translateY(-22px) scale(0.4);
+    background:#eee; /* về màu ô trống, không dùng opacity để tránh lộ nền đen của .grid */
+  }
+}
+
+/* Điểm số nổi lên rồi biến mất khi nổ hàng/cột.
+   Được tạo động bằng JS ở vị trí trung tâm khu vực vừa nổ, position:absolute
+   so với .grid (grid cần position:relative để làm điểm gốc toạ độ). */
+.score-popup{
+  position:absolute;
+  left:0;
+  top:0;
+  font-weight:bold;
+  font-size:22px;
+  color:#ff9800;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 0 1px white;
+  pointer-events:none;
+  z-index: 10;
+  animation: scorePopup 0.9s ease-out forwards;
+  white-space: nowrap;
+}
+.menu-btn{
+  background:none;
+  border:2px solid;
+  font-size: 30px;
+  padding:10px;
+  width:60px;
+  height:45px;
+  display:flex;
+  align-items: center;
+  position:absolute;
+  left:10px;
+  top:-40px;
+  right:5px;
+}
+
+@keyframes scorePopup {
+  0% {
+    transform: translate(-50%, 0) scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(-50%, -10px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -60px) scale(1);
+    opacity: 0;
+  }
 }
 .tray{
   display:flex;
@@ -63,6 +175,9 @@ body{
   align-items: center;
   gap:20px;
   position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
 }
 .mini-grid {
   display: grid;
@@ -141,4 +256,11 @@ body{
     transform: scale(1);
     opacity: 1;
   }
+}
+
+/* .hidden luôn phải đặt CUỐI file (hoặc dùng !important) để chắc chắn thắng
+   mọi rule display khác đứng sau nó trong file, tránh bug ẩn không có tác dụng
+   khi 1 phần tử vừa có .hidden vừa có class khác cũng set display (ví dụ .game-wrapper). */
+.hidden {
+  display: none !important;
 }

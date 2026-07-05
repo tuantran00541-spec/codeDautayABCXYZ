@@ -8,15 +8,50 @@ const GRID_SIZE = 6; // lưới 6x6 = 36 ô
 // Ví dụ: [[0,0]] là khối chỉ có 1 ô.
 // [[0,0],[0,1]] là khối 2 ô nằm ngang.
 const SHAPES = [
+  // --- Khối cơ bản (giữ nguyên) ---
   [[0, 0]],                                   // 1 ô đơn
   [[0, 0], [0, 1]],                           // 2 ô ngang
   [[0, 0], [1, 0]],                           // 2 ô dọc
   [[0, 0], [0, 1], [0, 2]],                   // 3 ô ngang (thẳng hàng)
   [[0, 0], [1, 0], [2, 0]],                   // 3 ô dọc
   [[0, 0], [0, 1], [1, 0], [1, 1]],           // Vuông 2x2
-  [[0, 0], [1, 0], [1, 1]],                   // hình L nhỏ
-  [[0, 0], [0, 1], [0, 2], [1, 0]],           // hình L to
-  [[0, 0], [0, 1], [0, 2], [1, 1]]            // hình T
+
+  // --- Thanh dài 4 ô ---
+  [[0, 0], [0, 1], [0, 2], [0, 3]],           // 4 ô ngang
+  [[0, 0], [1, 0], [2, 0], [3, 0]],           // 4 ô dọc
+
+  // --- Hình L nhỏ (4 hướng xoay) ---
+  [[0, 0], [1, 0], [1, 1]],                   // L nhỏ (góc dưới-trái)
+  [[0, 0], [0, 1], [1, 1]],                   // L nhỏ xoay (góc dưới-phải)
+  [[0, 1], [1, 0], [1, 1]],                   // L nhỏ xoay (góc trên-phải)
+  [[0, 0], [0, 1], [1, 0]],                   // L nhỏ xoay (góc trên-trái)
+
+  // --- Hình L to (4 hướng xoay) ---
+  [[0, 0], [0, 1], [0, 2], [1, 0]],           // L to
+  [[0, 0], [0, 1], [0, 2], [1, 2]],           // L to xoay
+  [[1, 0], [1, 1], [1, 2], [0, 2]],           // L to xoay
+  [[0, 0], [1, 0], [1, 1], [1, 2]],           // L to xoay
+
+  // --- Hình T (4 hướng xoay) ---
+  [[0, 0], [0, 1], [0, 2], [1, 1]],           // T quay xuống
+  [[0, 1], [1, 0], [1, 1], [2, 1]],           // T quay trái
+  [[1, 0], [1, 1], [1, 2], [0, 1]],           // T quay lên
+  [[0, 0], [1, 0], [2, 0], [1, 1]],           // T quay phải
+
+  // --- Hình S/Z (4 hướng xoay) ---
+  [[0, 0], [0, 1], [1, 1], [1, 2]],           // S ngang
+  [[0, 1], [0, 2], [1, 0], [1, 1]],           // Z ngang
+  [[0, 0], [1, 0], [1, 1], [2, 1]],           // S dọc
+  [[0, 1], [1, 0], [1, 1], [2, 0]],           // Z dọc
+
+  // --- Hình vuông lớn 3x3 ---
+  [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]], // vuông 3x3
+
+  // --- Chữ thập nhỏ (dấu +) ---
+  [[0, 1], [1, 0], [1, 1], [1, 2], [2, 1]],   // chữ thập
+
+  // --- Đường chéo bậc thang nhỏ ---
+  [[0, 0], [1, 1], [2, 2]]                    // chéo xuống 3 ô
 ];
 
 // ============================================
@@ -36,6 +71,12 @@ let trayBlocks = [null, null, null];
 let selectedSlot = null;
 
 let score = 0;
+
+// Combo chuỗi: chỉ tính khi 1 lượt đặt khối làm nổ từ 2 dòng (hàng/cột) trở lên.
+// - Lượt đầu tiên nổ >=2 dòng: comboMultiplier = số dòng nổ (ví dụ nổ 2 dòng -> x2).
+// - Lượt tiếp theo (liên tiếp) cũng nổ >=2 dòng: comboMultiplier += 1 (không tính lại theo số dòng).
+// - Lượt nào nổ 1 dòng hoặc không nổ gì -> reset comboMultiplier về 0 (không có combo).
+let comboMultiplier = 0;
 
 // ============================================
 // LẤY CÁC PHẦN TỬ HTML CẦN DÙNG NHIỀU LẦN
@@ -188,16 +229,27 @@ function tryPlaceBlock(slotIndex, cellIndex) {
 
   renderBoard();  // vẽ lại lưới theo boardState mới
   renderTray();   // vẽ lại tray (slot vừa dùng sẽ trống)
-  clearFullLines(); // kiểm tra hàng/cột đầy để xoá + cộng điểm
 
-  // Nếu cả 3 slot đều đã dùng hết -> ra bộ khối mới
-  if (trayBlocks.every(b => b === null)) {
-    generateNewTray();
+  // clearFullLines có thể kích hoạt animation nổ hàng/cột (bất đồng bộ).
+  // Các bước sau (ra khối mới / kiểm tra thua) phải đợi animation xong,
+  // vì lúc đó boardState mới thực sự phản ánh các ô đã bị xoá.
+  const hadFullLines = clearFullLines();
+
+  const proceed = () => {
+    if (trayBlocks.every(b => b === null)) {
+      generateNewTray();
+    } else {
+      checkGameOver();
+    }
+    saveGameState();
+  };
+
+  if (hadFullLines) {
+    setTimeout(proceed, hadFullLines);
   } else {
-    checkGameOver();
+    proceed();
   }
 
-  saveGameState();
   return true;
 }
 
@@ -249,28 +301,143 @@ function clearFullLines() {
     if (isFull) fullCols.push(col);
   }
 
-  if (fullRows.length === 0 && fullCols.length === 0) return; // không có gì để xoá
+  if (fullRows.length === 0 && fullCols.length === 0) {
+    comboMultiplier = 0; // lượt này không nổ dòng nào -> đứt combo
+    return 0;
+  }
 
-  // Xoá các hàng đầy
+  // Gom tất cả ô sẽ bị xoá (không trùng lặp nếu 1 ô vừa thuộc hàng vừa thuộc cột đầy)
+  const cellsToClear = new Set();
   fullRows.forEach(row => {
     for (let col = 0; col < GRID_SIZE; col++) {
-      boardState[rowColToIndex(row, col)] = false;
+      cellsToClear.add(rowColToIndex(row, col));
     }
   });
-
-  // Xoá các cột đầy
   fullCols.forEach(col => {
     for (let row = 0; row < GRID_SIZE; row++) {
-      boardState[rowColToIndex(row, col)] = false;
+      cellsToClear.add(rowColToIndex(row, col));
     }
   });
 
-  // Cộng điểm: mỗi hàng/cột xoá được +10 điểm (tuỳ bạn chỉnh số này)
+  // Hệ số nhân của LƯỢT NÀY (dựa trên số dòng nổ cùng lúc, giống trước đây).
   const linesCleared = fullRows.length + fullCols.length;
-  score += linesCleared * 10;
+  const lineMultiplier = linesCleared;
+
+  // Cập nhật combo chuỗi: chỉ tính combo khi lượt này nổ từ 2 dòng trở lên.
+  if (linesCleared >= 2) {
+    if (comboMultiplier === 0) {
+      // Bắt đầu combo mới, mức khởi điểm = số dòng nổ ở lượt này
+      comboMultiplier = lineMultiplier;
+    } else {
+      // Đang có combo từ lượt trước và lượt này tiếp tục nổ >=2 dòng -> cộng thêm 1
+      comboMultiplier += 1;
+    }
+  } else {
+    // Nổ đúng 1 dòng -> không tính combo, và làm đứt combo đang có (nếu có)
+    comboMultiplier = 0;
+  }
+
+  // Điểm cuối cùng = điểm cơ bản theo số dòng * hệ số áp dụng.
+  // Nếu đang có combo (>=2 dòng liên tiếp) thì dùng comboMultiplier, ngược lại dùng lineMultiplier như cũ.
+  const finalMultiplier = comboMultiplier > 0 ? comboMultiplier : lineMultiplier;
+  const gainedScore = linesCleared * 10 * finalMultiplier;
+  score += gainedScore;
   updateScore();
 
-  renderBoard(); // vẽ lại lưới sau khi xoá
+  showScorePopup(cellsToClear, gainedScore, finalMultiplier);
+
+  return playClearAnimation(cellsToClear, fullRows, fullCols);
+}
+
+// ============================================
+// HIỆU ỨNG ĐIỂM BAY LÊN KHI NỔ HÀNG/CỘT
+// ============================================
+// Tạo 1 phần tử .score-popup ở vị trí trung tâm của khu vực vừa nổ (trung bình
+// toạ độ các ô bị xoá), hiển thị số điểm vừa cộng (+ hệ số nhân nếu > 1),
+// rồi tự xoá phần tử này khỏi DOM sau khi animation CSS chạy xong.
+const SCORE_POPUP_DURATION = 900; // phải khớp với thời gian animation scorePopup trong CSS (0.9s)
+const CELL_SIZE = 50;
+const CELL_GAP = 1;
+
+function showScorePopup(cellsToClear, gainedScore, multiplier) {
+  const gridEl = document.querySelector('.grid');
+
+  // Tính toạ độ trung tâm (x, y) của khu vực vừa nổ, dựa trên vị trí trung bình
+  // của các ô bị xoá, để đặt popup ngay giữa vùng đó.
+  let sumX = 0;
+  let sumY = 0;
+  cellsToClear.forEach(index => {
+    const { row, col } = indexToRowCol(index);
+    sumX += col * (CELL_SIZE + CELL_GAP) + CELL_SIZE / 2;
+    sumY += row * (CELL_SIZE + CELL_GAP) + CELL_SIZE / 2;
+  });
+  const centerX = sumX / cellsToClear.size;
+  const centerY = sumY / cellsToClear.size;
+
+  const popupEl = document.createElement('div');
+  popupEl.classList.add('score-popup');
+  popupEl.style.left = `${centerX}px`;
+  popupEl.style.top = `${centerY}px`;
+  popupEl.textContent = `+${gainedScore}`;
+
+  gridEl.appendChild(popupEl);
+
+  // Dọn phần tử popup sau khi animation xong, tránh tích tụ DOM node lâu dài.
+  setTimeout(() => {
+    popupEl.remove();
+  }, SCORE_POPUP_DURATION);
+}
+
+// ============================================
+// HIỆU ỨNG NỔ HÀNG/CỘT: gợn sóng nổi lên rồi mờ dần
+// ============================================
+// Ý tưởng: thêm class .clearing (định nghĩa animation trong CSS) cho từng ô,
+// nhưng đặt animation-delay tăng dần theo thứ tự ô trong hàng/cột để tạo
+// cảm giác "sóng" lan từ đầu đến cuối, thay vì tất cả nổ cùng lúc.
+// boardState CHƯA bị xoá ngay, để tránh checkGameOver/tray mới chạy trước khi
+// người chơi nhìn thấy hiệu ứng. Sau khi animation xong mới xoá thật + renderBoard.
+const CLEAR_ANIM_DURATION = 450;  // phải khớp với thời gian animation trong CSS (0.45s)
+const CLEAR_ANIM_STEP_DELAY = 35; // độ trễ (ms) giữa mỗi ô liên tiếp trong hàng/cột -> tạo hiệu ứng gợn sóng
+
+function playClearAnimation(cellsToClear, fullRows, fullCols) {
+  let maxDelay = 0;
+
+  // Tính delay cho từng ô dựa theo vị trí của nó trong hàng/cột đang bị xoá.
+  // Nếu 1 ô thuộc cả hàng đầy và cột đầy, lấy delay nhỏ nhất (nổ sớm nhất) cho đẹp mắt.
+  cellsToClear.forEach(index => {
+    const { row, col } = indexToRowCol(index);
+    let delay = Infinity;
+
+    if (fullRows.includes(row)) {
+      delay = Math.min(delay, col * CLEAR_ANIM_STEP_DELAY);
+    }
+    if (fullCols.includes(col)) {
+      delay = Math.min(delay, row * CLEAR_ANIM_STEP_DELAY);
+    }
+    if (delay === Infinity) delay = 0;
+
+    maxDelay = Math.max(maxDelay, delay);
+
+    const cellEl = cells[index];
+    cellEl.style.animationDelay = `${delay}ms`;
+    cellEl.classList.add('clearing');
+  });
+
+  // Chờ cho ô có delay lớn nhất chạy xong animation, rồi mới xoá boardState thật
+  // và dọn lại style/class để không ảnh hưởng tới lần "nổ" tiếp theo.
+  const totalWait = maxDelay + CLEAR_ANIM_DURATION;
+
+  setTimeout(() => {
+    cellsToClear.forEach(index => {
+      boardState[index] = false;
+      const cellEl = cells[index];
+      cellEl.classList.remove('clearing');
+      cellEl.style.animationDelay = '';
+    });
+    renderBoard();
+  }, totalWait);
+
+  return totalWait;
 }
 
 function updateScore() {
@@ -336,6 +503,7 @@ const resetBtn = document.querySelector('#reset');
 resetBtn.addEventListener('click', () => {
   boardState = new Array(GRID_SIZE * GRID_SIZE).fill(false);
   score = 0;
+  comboMultiplier = 0;
   selectedSlot = null;
 
   updateScore();
@@ -352,7 +520,8 @@ function saveGameState() {
   const gameState = {
     boardState: boardState,
     trayBlocks: trayBlocks,
-    score: score
+    score: score,
+    comboMultiplier: comboMultiplier
   };
   localStorage.setItem('gameState', JSON.stringify(gameState));
 }
@@ -366,6 +535,7 @@ function loadGameState() {
     boardState = gameState.boardState;
     trayBlocks = gameState.trayBlocks;
     score = gameState.score;
+    comboMultiplier = gameState.comboMultiplier || 0; // an toàn cho save cũ chưa có field này
     return true;
   } catch (e) {
     return false; // dữ liệu lỗi, bỏ qua
@@ -542,15 +712,80 @@ function cancelDrag(slotEl) {
 }
 
 // ============================================
-// KHỞI ĐỘNG GAME
+// MÀN CHỜ (START SCREEN) & CÁC OVERLAY LIÊN QUAN
 // ============================================
-const hasSavedGame = loadGameState();
+// Game KHÔNG tự khởi động ngay khi tải trang nữa.
+// Người chơi phải bấm "Bắt Đầu" ở màn chờ, game mới thực sự chạy.
+// Việc ẩn/hiện các màn chỉ đơn giản là thêm/xoá class "hidden" (định nghĩa trong CSS),
+// không cần pause/resume state gì phức tạp vì game này không có action tự chạy theo thời gian.
 
-if (hasSavedGame) {
+const logInLoadEl = document.querySelector('.log-in-load');
+const resumeChoiceEl = document.querySelector('#resumeChoice');
+const gameWrapperEl = document.querySelector('.game-wrapper');
+
+const starGameBtn = document.querySelector('#starGame');
+const againGameBtn = document.querySelector('#againGame');
+const newGameBtn = document.querySelector('#newGame');
+const menuBtnBack = document.querySelector('#menuBtnBack');
+
+// Bắt đầu 1 ván hoàn toàn mới: xoá save cũ, reset toàn bộ state, ra khối mới.
+function startNewGame() {
+  clearGameState();
+  boardState = new Array(GRID_SIZE * GRID_SIZE).fill(false);
+  score = 0;
+  comboMultiplier = 0;
+  selectedSlot = null;
+
+  updateScore();
+  renderBoard();
+  generateNewTray(); // hàm này tự saveGameState() luôn
+
+  document.querySelector('#gameOverOverlay').classList.remove('show');
+}
+
+// Tiếp tục ván đã lưu trong localStorage (giả định loadGameState() đã load thành công trước đó).
+function resumeSavedGame() {
   renderBoard();
   renderTray();
   updateScore();
-} else {
-  generateNewTray();
-  updateScore();
 }
+
+// Nút "Bắt Đầu" ở màn chờ: nếu có save sẵn thì hỏi Tiếp tục/Chơi mới,
+// không có save thì vào thẳng ván mới.
+starGameBtn.addEventListener('click', () => {
+  const hasSavedGame = loadGameState();
+
+  if (hasSavedGame) {
+    // Có ván cũ -> hiện hộp hỏi Tiếp tục / Chơi mới, chưa vào game ngay
+    logInLoadEl.classList.add('hidden');
+    resumeChoiceEl.classList.remove('hidden');
+  } else {
+    // Chưa có ván nào -> vào thẳng game mới
+    logInLoadEl.classList.add('hidden');
+    gameWrapperEl.classList.remove('hidden');
+    startNewGame();
+  }
+});
+
+// Trong hộp hỏi: chọn "Tiếp tục"
+againGameBtn.addEventListener('click', () => {
+  resumeChoiceEl.classList.add('hidden');
+  gameWrapperEl.classList.remove('hidden');
+  resumeSavedGame();
+});
+
+// Trong hộp hỏi: chọn "Chơi lại" (bắt đầu ván mới, bỏ save cũ)
+newGameBtn.addEventListener('click', () => {
+  resumeChoiceEl.classList.add('hidden');
+  gameWrapperEl.classList.remove('hidden');
+  startNewGame();
+});
+
+// Nút quay lại menu (↩) trong lúc đang chơi: chỉ ẩn game-wrapper, hiện lại màn chờ.
+// Không cần pause gì cả vì boardState/trayBlocks/score vẫn giữ nguyên trong biến JS,
+// bấm "Bắt Đầu" -> "Tiếp tục" lại từ màn chờ sẽ khôi phục đúng y trạng thái (đọc lại từ localStorage,
+// vốn cũng đã được saveGameState() cập nhật liên tục trong lúc chơi).
+menuBtnBack.addEventListener('click', () => {
+  gameWrapperEl.classList.add('hidden');
+  logInLoadEl.classList.remove('hidden');
+});

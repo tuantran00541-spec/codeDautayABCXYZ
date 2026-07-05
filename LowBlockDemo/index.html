@@ -7,7 +7,22 @@
   <title>Low Block</title>
 </head>
 <body>
-<div class="game-wrapper">
+<div class="container">
+  <!-- Màn chờ chính -->
+  <div class="log-in-load">
+    <button class="start-game" id="starGame">Bắt Đầu</button>
+  </div>
+
+  <!-- Hộp hỏi tiếp tục / chơi mới (mặc định ẩn) -->
+  <div class="resume-choice hidden" id="resumeChoice">
+    <p>Bạn có ván đang chơi. Tiếp tục hay chơi mới?</p>
+    <button class="again-game" id="againGame">Tiếp tục</button>
+    <button class="new-game" id="newGame">Chơi lại</button>
+  </div>
+</div>
+
+<div class="game-wrapper hidden">
+  <button class="menu-btn" id="menuBtnBack">↩</button>
 <p id="maxScore">🏆 </p>
 <p id="score">0</p>
 <!----------------grid---------------->

@@ -54,17 +54,55 @@ const SHAPES = [
   [[0, 0], [1, 1], [2, 2]]                    // chéo xuống 3 ô
 ];
 
+// Bảng màu cơ bản để random cho mỗi khối. Giữ màu "bình thường", dễ phân biệt,
+// tránh màu quá chói hoặc quá nhạt khó nhìn trên nền xám của ô.
+const BLOCK_COLORS = [
+  '#4caf50', // xanh lá
+  '#2196f3', // xanh dương
+  '#ff9800', // cam
+  '#e91e63', // hồng đậm
+  '#9c27b0', // tím
+  '#00bcd4', // xanh ngọc
+  '#ffc107', // vàng
+  '#f44336'  // đỏ
+];
+
+function randomBlockColor() {
+  return BLOCK_COLORS[Math.floor(Math.random() * BLOCK_COLORS.length)];
+}
+
+// ============================================
+// PHÂN LOẠI ĐỘ KHÓ CỦA KHỐI (dựa trên số ô: càng nhiều ô càng khó tìm chỗ đặt vừa)
+// ============================================
+// Không dùng ngưỡng số ô cố định (ví dụ "<=2 là dễ") vì bộ SHAPES hiện có phân bố
+// lệch hẳn về phía 3-4 ô (15/27 khối có đúng 4 ô), nên ngưỡng cố định sẽ làm nhóm
+// HARD chỉ còn 1-2 khối, không đủ để tạo cảm giác "ngẫu nhiên trong cùng độ khó".
+//
+// Thay vào đó, sắp xếp toàn bộ SHAPES theo số ô tăng dần rồi chia đều thành 3 phần
+// bằng nhau theo percentile (1/3 dễ nhất - 1/3 giữa - 1/3 khó nhất). Cách này luôn
+// đảm bảo mỗi nhóm có đủ số lượng khối để random, bất kể bộ SHAPES gốc phân bố ra sao.
+const SHAPES_BY_SIZE = [...SHAPES].sort((a, b) => a.length - b.length);
+const EASY_CUTOFF = Math.ceil(SHAPES_BY_SIZE.length / 3);
+const MEDIUM_CUTOFF = Math.ceil((SHAPES_BY_SIZE.length * 2) / 3);
+const EASY_SHAPES = SHAPES_BY_SIZE.slice(0, EASY_CUTOFF);
+const MEDIUM_SHAPES = SHAPES_BY_SIZE.slice(EASY_CUTOFF, MEDIUM_CUTOFF);
+const HARD_SHAPES = SHAPES_BY_SIZE.slice(MEDIUM_CUTOFF);
+
 // ============================================
 // BIẾN TRẠNG THÁI (STATE) CỦA GAME
 // ============================================
-// boardState là mảng 36 phần tử, true = ô đã có khối, false = ô trống.
-// Dùng mảng riêng thay vì đọc trực tiếp class trên DOM để code JS dễ tính toán hơn,
-// rồi sau đó mới "vẽ" lại kết quả lên DOM.
-let boardState = new Array(GRID_SIZE * GRID_SIZE).fill(false);
+// boardState là mảng 36 phần tử: null = ô trống, hoặc 1 mã màu (string) nếu ô đã có khối.
+// Trước đây chỉ lưu true/false, giờ lưu luôn màu để mỗi khối giữ đúng màu của nó
+// kể cả sau khi đã đặt xuống lưới.
+let boardState = new Array(GRID_SIZE * GRID_SIZE).fill(null);
 
 // trayBlocks lưu 3 khối đang chờ trong tray.
 // null nghĩa là slot đó đã được đặt vào lưới rồi (trống chỗ đó).
 let trayBlocks = [null, null, null];
+
+// Màu của từng khối trong tray, khớp theo index với trayBlocks.
+// Được random mới mỗi khi generateNewTray() sinh khối mới.
+let trayColors = [null, null, null];
 
 // Slot nào trong tray đang được người chơi CHỌN (bấm vào) để chuẩn bị đặt.
 // null nghĩa là chưa chọn gì.
@@ -101,14 +139,57 @@ function rowColToIndex(row, col) {
   return row * GRID_SIZE + col;
 }
 
+// Kiểm tra 1 shape có ít nhất 1 vị trí nào đặt được vào boardState hiện tại không.
+// Tách riêng hàm này (trước đây code này nằm thẳng trong checkGameOver) để dùng
+// lại được cho cả việc kiểm tra thua CŨNG NHƯ cho thuật toán chọn độ khó khối mới.
+function canShapeBePlacedOnBoard(shape) {
+  if (!shape) return false;
+
+  for (let index = 0; index < GRID_SIZE * GRID_SIZE; index++) {
+    const { row: baseRow, col: baseCol } = indexToRowCol(index);
+    const targetCells = shape.map(([dr, dc]) => ({
+      row: baseRow + dr,
+      col: baseCol + dc
+    }));
+
+    const canPlace = targetCells.every(({ row, col }) => {
+      const inBounds = row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE;
+      if (!inBounds) return false;
+      return !boardState[rowColToIndex(row, col)];
+    });
+
+    if (canPlace) return true;
+  }
+  return false;
+}
+
 // ============================================
-// BƯỚC 1: RANDOM 3 KHỐI MỚI VÀO TRAY
+// BƯỚC 1: SINH 3 KHỐI MỚI VÀO TRAY (1 dễ + 1 trung bình + 1 khó)
 // ============================================
+// Trước đây random hoàn toàn trong toàn bộ SHAPES, có thể vô tình ra 3 khối
+// đều khó (hoặc đều dễ) cùng lúc, làm độ khó ván chơi không ổn định.
+// Giờ chia SHAPES thành 3 nhóm độ khó theo số ô (EASY/MEDIUM/HARD ở trên) và
+// LUÔN đảm bảo tray có đủ 3 mức: 1 dễ, 1 trung bình, 1 khó mỗi lượt sinh mới.
+//
+// Trong mỗi nhóm, ưu tiên chọn ngẫu nhiên trong số các khối CÒN ĐẶT ĐƯỢC vào
+// bàn cờ hiện tại (dùng canShapeBePlacedOnBoard) - tránh tình huống vô tình
+// bốc phải khối chắc chắn không đặt được ở đâu, dồn người chơi vào thua oan
+// dù bàn cờ vẫn còn đủ chỗ cho những hình khác. Nếu cả nhóm đó không còn khối
+// nào đặt được (bàn cờ đã quá chật với mức độ khó này), fallback random tự do
+// trong nhóm đó như cũ, để không bị "kẹt" không sinh được khối nào.
+function pickShapeFromPool(pool) {
+  const placeable = pool.filter(shape => canShapeBePlacedOnBoard(shape));
+  const source = placeable.length > 0 ? placeable : pool;
+  return source[Math.floor(Math.random() * source.length)];
+}
+
 function generateNewTray() {
-  trayBlocks = trayBlocks.map(() => {
-    const randomShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
-    return randomShape;
-  });
+  trayBlocks = [
+    pickShapeFromPool(EASY_SHAPES),
+    pickShapeFromPool(MEDIUM_SHAPES),
+    pickShapeFromPool(HARD_SHAPES)
+  ];
+  trayColors = trayColors.map(() => randomBlockColor());
   renderTray();
   checkGameOver(); // mỗi lần ra khối mới, kiểm tra luôn xem còn đặt được không
   saveGameState();
@@ -122,6 +203,8 @@ function renderTray() {
 
     if (!shape) return; // slot này đã được dùng hết, để trống
 
+    const color = trayColors[slotIndex] || randomBlockColor();
+
     // Tính xem hình khối này rộng/cao bao nhiêu ô để tạo mini-grid vừa khít
     const maxRow = Math.max(...shape.map(([r]) => r)) + 1;
     const maxCol = Math.max(...shape.map(([, c]) => c)) + 1;
@@ -131,7 +214,8 @@ function renderTray() {
     miniGrid.style.gridTemplateColumns = `repeat(${maxCol}, 20px)`;
     miniGrid.style.gridTemplateRows = `repeat(${maxRow}, 20px)`;
 
-    // Tạo đủ maxRow * maxCol ô nhỏ, ô nào thuộc shape thì tô màu, còn lại để trong suốt
+    // Tạo đủ maxRow * maxCol ô nhỏ, ô nào thuộc shape thì tô màu (kèm hiệu ứng
+    // lồi 3D giống ô thật trên lưới), còn lại để trong suốt
     for (let r = 0; r < maxRow; r++) {
       for (let c = 0; c < maxCol; c++) {
         const miniCell = document.createElement('div');
@@ -139,7 +223,12 @@ function renderTray() {
         miniCell.style.width = '20px';
         miniCell.style.height = '20px';
         miniCell.style.borderRadius = '3px';
-        miniCell.style.background = isPartOfShape ? '#4caf50' : 'transparent';
+        if (isPartOfShape) {
+          miniCell.classList.add('mini-cell-block');
+          miniCell.style.setProperty('--block-color', color);
+        } else {
+          miniCell.style.background = 'transparent';
+        }
         miniGrid.appendChild(miniCell);
       }
     }
@@ -218,13 +307,16 @@ function tryPlaceBlock(slotIndex, cellIndex) {
     return false;
   }
 
-  // Đặt khối: đánh dấu các ô liên quan là true trong boardState
+  // Đặt khối: ghi mã màu của khối vào các ô liên quan trong boardState
+  // (trước đây chỉ ghi true/false, giờ ghi màu để mỗi khối giữ đúng màu riêng).
+  const placedColor = trayColors[slotIndex] || randomBlockColor();
   targetCells.forEach(({ row, col }) => {
-    boardState[rowColToIndex(row, col)] = true;
+    boardState[rowColToIndex(row, col)] = placedColor;
   });
 
   // Xoá khối này khỏi tray (đánh dấu slot đã dùng)
   trayBlocks[slotIndex] = null;
+  trayColors[slotIndex] = null;
   selectedSlot = null;
 
   renderBoard();  // vẽ lại lưới theo boardState mới
@@ -266,7 +358,13 @@ cells.forEach((cellEl, cellIndex) => {
 // ============================================
 function renderBoard() {
   cells.forEach((cellEl, index) => {
-    cellEl.classList.toggle('filled', boardState[index]);
+    const color = boardState[index];
+    cellEl.classList.toggle('filled', !!color);
+    if (color) {
+      cellEl.style.setProperty('--block-color', color);
+    } else {
+      cellEl.style.removeProperty('--block-color');
+    }
   });
 }
 
@@ -429,7 +527,7 @@ function playClearAnimation(cellsToClear, fullRows, fullCols) {
 
   setTimeout(() => {
     cellsToClear.forEach(index => {
-      boardState[index] = false;
+      boardState[index] = null;
       const cellEl = cells[index];
       cellEl.classList.remove('clearing');
       cellEl.style.animationDelay = '';
@@ -441,39 +539,19 @@ function playClearAnimation(cellsToClear, fullRows, fullCols) {
 }
 
 function updateScore() {
-  scoreEl.textContent = `Điểm: ${score}`;
+  scoreEl.textContent = `${score}`;
 }
 
 // ============================================
 // BƯỚC 6: KIỂM TRA THUA (không còn khối nào đặt được vào đâu cả)
 // ============================================
 function checkGameOver() {
-  // Với mỗi khối còn lại trong tray, thử tất cả 36 vị trí trên lưới
-  // xem có ít nhất 1 chỗ đặt được không.
-  const canAnyBlockBePlaced = trayBlocks.some(shape => {
-    if (!shape) return false; // slot trống thì bỏ qua
-
-    for (let index = 0; index < GRID_SIZE * GRID_SIZE; index++) {
-      const { row: baseRow, col: baseCol } = indexToRowCol(index);
-      const targetCells = shape.map(([dr, dc]) => ({
-        row: baseRow + dr,
-        col: baseCol + dc
-      }));
-
-      const canPlace = targetCells.every(({ row, col }) => {
-        const inBounds = row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE;
-        if (!inBounds) return false;
-        return !boardState[rowColToIndex(row, col)];
-      });
-
-      if (canPlace) return true; // tìm thấy ít nhất 1 chỗ đặt được -> chưa thua
-    }
-    return false; // khối này không có chỗ nào đặt được
-  });
+  // Với mỗi khối còn lại trong tray, kiểm tra có ít nhất 1 chỗ đặt được không.
+  const canAnyBlockBePlaced = trayBlocks.some(shape => canShapeBePlacedOnBoard(shape));
 
   if (!canAnyBlockBePlaced) {
   setTimeout(() => {
-    document.querySelector('#finalScore').textContent = `Điểm: ${score} | Kỷ lục: ${maxScore}`;
+    document.querySelector('#finalScore').textContent = `Point: ${score} | MaxPoint: ${maxScore}`;
     document.querySelector('#gameOverOverlay').classList.add('show');
     clearGameState();
   }, 100);
@@ -488,10 +566,15 @@ function updateMaxScore() {
     maxScore = score;
     localStorage.setItem('maxScore', maxScore);
   }
-  maxScoreEl.textContent = `🏆 ${maxScore}`;
+  // Tách emoji và số ra 2 span riêng (thay vì gộp chung 1 chuỗi text):
+  // flexbox chỉ canh giữa được các PHẦN TỬ CON, không "nhìn thấy" gì để canh
+  // nếu emoji + số chỉ là 1 text node duy nhất. Bọc span cũng cho phép set
+  // font-size riêng cho emoji, tránh emoji bị font pixel (Press Start 2P)
+  // đẩy lên baseline khác với số.
+  maxScoreEl.innerHTML = `<span class="trophy-icon">🏆</span><span>${maxScore}</span>`;
 }
 function updateScore() {
-  scoreEl.textContent = `Điểm: ${score}`;
+  scoreEl.textContent = `${score}`;
   updateMaxScore();
 }
 
@@ -501,7 +584,7 @@ function updateScore() {
 const resetBtn = document.querySelector('#reset');
 
 resetBtn.addEventListener('click', () => {
-  boardState = new Array(GRID_SIZE * GRID_SIZE).fill(false);
+  boardState = new Array(GRID_SIZE * GRID_SIZE).fill(null);
   score = 0;
   comboMultiplier = 0;
   selectedSlot = null;
@@ -520,6 +603,7 @@ function saveGameState() {
   const gameState = {
     boardState: boardState,
     trayBlocks: trayBlocks,
+    trayColors: trayColors,
     score: score,
     comboMultiplier: comboMultiplier
   };
@@ -534,8 +618,13 @@ function loadGameState() {
     const gameState = JSON.parse(saved);
     boardState = gameState.boardState;
     trayBlocks = gameState.trayBlocks;
+    // An toàn cho save cũ chưa có field này, hoặc save cũ dùng true/false thay vì màu:
+    // trayColors thiếu thì random bù; boardState còn giá trị true (kiểu cũ) thì đổi
+    // thành 1 màu mặc định để không bị lỗi hiển thị.
+    trayColors = gameState.trayColors || trayBlocks.map(b => b ? randomBlockColor() : null);
+    boardState = boardState.map(cell => cell === true ? BLOCK_COLORS[0] : (cell === false ? null : cell));
     score = gameState.score;
-    comboMultiplier = gameState.comboMultiplier || 0; // an toàn cho save cũ chưa có field này
+    comboMultiplier = gameState.comboMultiplier || 0;
     return true;
   } catch (e) {
     return false; // dữ liệu lỗi, bỏ qua
@@ -705,11 +794,26 @@ function cancelDrag(slotEl) {
   if (!dragState) return;
   clearPreview();
   if (dragState.ghostEl) dragState.ghostEl.remove();
-  if (dragState.dragging && dragState.pointerId != null && slotEl.hasPointerCapture?.(dragState.pointerId)) {
+  if (dragState.dragging && dragState.pointerId != null && slotEl?.hasPointerCapture?.(dragState.pointerId)) {
     slotEl.releasePointerCapture(dragState.pointerId);
   }
   dragState = null;
 }
+
+// LƯỚI AN TOÀN: sự kiện pointerup/pointercancel đôi khi không bắn tới đúng slotEl
+// (ví dụ pointer bị hệ thống huỷ giữa chừng, đổi tab, cảm ứng đa điểm...).
+// Khi đó handlePointerUp/cancelDrag phía trên không chạy, ghost bị bỏ lại mãi mãi
+// trong document.body -> đây chính là lỗi "khối mờ dính lại" đã gặp.
+// Gắn thêm listener toàn cục trên window để LUÔN dọn dẹp ghost, dù sự kiện gốc
+// có "lạc" đi đâu, không phụ thuộc vào việc nó có tới đúng slotEl hay không.
+window.addEventListener('pointerup', (e) => {
+  if (!dragState || dragState.pointerId !== e.pointerId) return;
+  cancelDrag(slots[dragState.slotIndex]);
+});
+window.addEventListener('pointercancel', (e) => {
+  if (!dragState || dragState.pointerId !== e.pointerId) return;
+  cancelDrag(slots[dragState.slotIndex]);
+});
 
 // ============================================
 // MÀN CHỜ (START SCREEN) & CÁC OVERLAY LIÊN QUAN
@@ -731,7 +835,7 @@ const menuBtnBack = document.querySelector('#menuBtnBack');
 // Bắt đầu 1 ván hoàn toàn mới: xoá save cũ, reset toàn bộ state, ra khối mới.
 function startNewGame() {
   clearGameState();
-  boardState = new Array(GRID_SIZE * GRID_SIZE).fill(false);
+  boardState = new Array(GRID_SIZE * GRID_SIZE).fill(null);
   score = 0;
   comboMultiplier = 0;
   selectedSlot = null;

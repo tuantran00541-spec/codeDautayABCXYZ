@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <title>Low Block</title>
 </head>
@@ -10,20 +12,22 @@
 <div class="container">
   <!-- Màn chờ chính -->
   <div class="log-in-load">
-    <button class="start-game" id="starGame">Bắt Đầu</button>
+    <button class="start-game" id="starGame">Start</button>
   </div>
 
   <!-- Hộp hỏi tiếp tục / chơi mới (mặc định ẩn) -->
   <div class="resume-choice hidden" id="resumeChoice">
-    <p>Bạn có ván đang chơi. Tiếp tục hay chơi mới?</p>
-    <button class="again-game" id="againGame">Tiếp tục</button>
-    <button class="new-game" id="newGame">Chơi lại</button>
+    <p>Continue or start a new one?</p>
+    <button class="again-game" id="againGame">Continue</button>
+    <button class="new-game" id="newGame">New Game</button>
   </div>
 </div>
 
 <div class="game-wrapper hidden">
+<div class="top-bar">
   <button class="menu-btn" id="menuBtnBack">↩</button>
-<p id="maxScore">🏆 </p>
+  <p id="maxScore">🏆</p>
+</div>
 <p id="score">0</p>
 <!----------------grid---------------->
 <div class="grid">
@@ -73,18 +77,21 @@
 </div>
 <!----------------------------------->
 
+</div>
+
 <!----------------game over overlay------------------->
+<!-- Đặt ngoài .game-wrapper vì .game-wrapper có transform (để căn giữa),
+     mà transform trên ancestor sẽ biến position:fixed của phần tử con
+     thành "fixed theo ancestor đó" thay vì theo toàn viewport (spec CSS).
+     Kết quả là overlay chỉ phủ vừa khung .game-wrapper thay vì phủ kín màn hình. -->
 <div class="game-over-overlay" id="gameOverOverlay">
   <div class="game-over-box">
     <h1>GAME OVER</h1>
-    <p class="final-score" id="finalScore">Điểm: 0</p>
-    <button class="reset-btn" id="reset">⟳ Chơi lại</button>
+    <p class="final-score" id="finalScore">0</p>
+    <button class="reset-btn" id="reset">⟳</button>
   </div>
 </div>
 <!----------------------------------------------------->
-</div>
-
-
 
   <script src="script.js"></script>
 </body>

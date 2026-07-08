@@ -2,141 +2,167 @@ Low Block
 Low Block is a shape-stacking puzzle game where you drag and drop polyomino pieces onto an 8×8 grid to form complete rows or columns and clear them. The game features adaptive difficulty, a fully responsive interface, and comprehensive accessibility support.
 
 🎮 Key Features
-8×8 Board – strikes the best balance between challenge and comfortable touch targets on mobile devices.
+8×8 Board – the best trade‑off between challenge and comfortable touch targets on mobile.
 
-Fixed Cell‑Count Difficulty Tiers – Easy (≤2 cells), Medium (3–4 cells), Hard (≥5 cells), replacing the previous percentile‑based split.
+Fixed Cell‑Count Difficulty Tiers – Easy (≤2 cells), Medium (3–4 cells), Hard (≥5 cells).
 
-Weighted Random Tray Generation – each slot is rolled independently with odds: 35% Easy, 50% Medium, 15% Hard.
+Weighted Random Tray Generation – each slot is rolled independently (35% Easy, 50% Medium, 15% Hard).
 
-Hard‑Piece Cap – at most one Hard piece per tray; if the board is >65% full, the Hard chance drops from 15% to 5%.
+Hard‑Piece Cap & Adaptive Weighting – at most one Hard piece per tray, and the Hard chance drops from 15% to 5% when the board is >65% full.
 
-Fully Responsive Interface – automatically adapts cell sizes, spacing, and typography to any screen (phones, tablets, desktops).
+Fully Responsive Interface – adapts to any screen size using vmin, clamp(), and breakpoints.
 
 Dark Mode – automatically switches according to system preference.
 
-Accessibility – supports prefers-reduced-motion and prefers-contrast: high for users with special needs.
+Accessibility – supports prefers-reduced-motion and prefers-contrast: high.
 
-🆕 What's New (Latest Update)
+Audio System – synth‑based sound effects (Web Audio) and looping background music (HTML <audio>) with context‑aware track switching and a mute toggle.
+
+🆕 What's New
 ⚙️ Gameplay Enhancements
 Board Size Increased (6×6 → 8×8)
-Based on simulations running hundreds of automated games, the 8×8 board raises the average survival time from ~17–41 moves to ~80 moves, while still keeping cells large enough for comfortable touch interaction.
+Empirical simulations showed that 8×8 raises the average survival time from ~17–41 moves to ~80 moves, while still providing comfortable touch targets.
 
 Difficulty Tiers Redefined by Fixed Thresholds
-The old percentile‑based split was unbalanced (15 out of 27 shapes had exactly 4 cells). Now tiers are defined by cell count: Easy ≤2, Medium 3–4, Hard ≥5. Hard now contains only the plus‑shaped piece (5 cells) and the 3×3 square (9 cells).
+Replaced the unbalanced percentile‑based split with fixed cell‑count thresholds: Easy ≤2, Medium 3–4, Hard ≥5. Hard now contains only the plus‑shape (5 cells) and the 3×3 square (9 cells).
 
 Weighted Random Tray Generation
-No longer forces one piece from each tier per tray. Each of the three slots is rolled independently, so some trays can be all Easy/Medium while others still offer real challenge.
+Each of the three tray slots is rolled independently, so some trays are all Easy/Medium while others still offer a real challenge.
 
 Hard‑Piece Cap and Adaptive Weighting
-A tray can contain at most one Hard piece; a second Hard roll is downgraded to Medium. Also, when the board is more than 65% full, the Hard chance drops from 15% to 5% to avoid unwinnable late‑game situations.
+A tray can contain at most one Hard piece; a second Hard roll is downgraded to Medium. When the board is >65% full, the Hard chance drops from 15% to 5% to avoid unwinnable late‑game situations.
 
 Fixed Unplaceable‑Piece Fallback
-The shape‑selection logic now cascades from the requested tier to easier tiers if no placeable shape exists in the original tier, rather than picking randomly within an unplaceable tier. This single fix roughly doubled average survival time in simulations.
-
-Fixed Dark Grid Background During Clear Animation
-The grid background (visible through gaps and when cells lift during clears) is now consistently light in dark mode, eliminating the black flashing patch.
-
-Fixed Panel Background Bleed
-Split --bg-cell-empty (grid cells only) from --bg-panel (dialogs, tray slots, menu‑button hover, game‑over box) so changing cell colour no longer recolours unrelated UI.
-
-Fixed Script Filename Typos
-index.html now correctly references stage.js and drapdrop.js (formerly misnamed as state.js and dragdrop.js), allowing the game to load properly.
+The shape‑selection logic now cascades from the requested tier to easier tiers if no placeable shape exists, rather than randomly picking within an unplaceable tier. This single fix roughly doubled average survival time in simulations.
 
 🎨 UI/UX Improvements
-Responsive Design
+Responsive Design – uses vmin, clamp(), and breakpoints for perfect scaling across devices; optimised for landscape mode on short mobile screens.
 
-Uses vmin and clamp() to make cell sizes, gaps, and typography fluid across all screens.
+Layout Enhancements – replaced absolute positioning with CSS Grid place-items: center; added min-height: 100dvh to avoid mobile nav‑bar overlap.
 
-Breakpoints for small screens (≤360px) and tablets (≥768px).
+Theming & Colour System – all colours, shadows, fonts, and z‑indices are managed via CSS custom properties; automatic Dark Mode; separated cell background from panel backgrounds.
 
-Optimised for landscape mode on mobile devices with low height (≤500px).
+Accessibility – supports prefers-reduced-motion and prefers-contrast: high; added user-select: none, -webkit-tap-highlight-color: transparent, and touch-action: manipulation for better mobile interaction.
 
-Layout Enhancements
+Visual Polish – glass‑morphism effect on game‑over overlay; smooth hover/active transitions; glow effect on selected tray slots; tray container uses flex-wrap: wrap to prevent overflow.
 
-Replaced position: absolute + transform centering with CSS Grid place-items: center, avoiding containing‑block issues that affected position: fixed descendants.
+🔊 Audio Implementation
+A complete audio system has been added, consisting of sound effects (SFX) for gameplay actions and background music that switches intelligently between menu and game states.
 
-Added min-height: 100dvh to prevent overlap by mobile browser navigation bars.
+Sound Effects (Web Audio API, synth‑based)
 
-Theming & Colour System
+Block placement – a subtle "tick" (square wave, 320 Hz, ~70 ms) plays on every successful placement.
 
-All colours, shadows, fonts, z‑indices, and animation timings are managed via CSS custom properties (Design Tokens).
+Line clear – an ascending arpeggio (triangle wave) plays when rows/columns clear. The number of notes and spacing scale with the clear's score multiplier, so big combos sound more satisfying.
 
-Automatic Dark Mode via prefers-color-scheme: dark.
+Mute toggle feedback – a single confirmation tone plays when sound is turned back on, giving audible confirmation.
 
-Separated grid cell background from panel backgrounds for independent theming.
+Background Music (HTML <audio>, real .mp3 files)
+Three tracks are stored in the audio/ folder:
 
-Accessibility
+leaving_home.mp3 – menu track 1
 
-prefers-reduced-motion support: disables or minimises all animations.
+abandoned.mp3 – menu track 2
 
-prefers-contrast: high support: increases contrast and border visibility.
+secret_base.mp3 – in‑game track
 
-user-select: none and -webkit-tap-highlight-color: transparent for smoother touch interaction.
+Behaviour:
 
-touch-action: manipulation to prevent double‑tap zoom on mobile.
+On page load (or when the menu is displayed), one of the two menu tracks is chosen randomly and looped.
 
-Visual Polish
+When the player starts or resumes a game, playback switches to secret_base.mp3, looped for the duration of play.
 
-backdrop-filter: blur(4px) on the game‑over overlay for a glass‑morphism effect.
+When the player returns to the menu from a game, the in‑game track is not cut off immediately – it is allowed to finish its current playthrough before switching to a new random menu track. If the player re‑enters a game before that happens, the in‑game track simply continues.
 
-Smooth transitions on interactive elements (buttons, slots) with hover/active states.
+Manual loop handling (via the ended event) enables this "finish then switch" behaviour; native loop is not used.
 
-Glow shadow effect on selected tray slots.
+Autoplay blocking is handled gracefully: the first track attempt on page load silently fails, and playback only starts after the user's first click (e.g., on the "Start" button).
 
-Tray container uses flex-wrap: wrap to prevent overflow on narrow screens.
+Mute Button
 
-8×8 Grid Resizing
+A mute button (🔊/🔇) is placed in the top bar, controlling both SFX and music together.
 
-Updated --cell-size, grid-template-columns/rows, and top‑bar max-width to match the new 8‑column layout.
+Mute state is persisted in localStorage (soundMuted) across page reloads.
 
-Adjusted responsive breakpoints to keep touch targets comfortable on mobile.
+🐛 Bug Fixes
+Fixed dark grid background during clear animation – the grid background is now consistently light in dark mode.
+
+Fixed panel background bleed – split --bg-cell-empty (grid cells) from --bg-panel (dialogs, tray, menu‑button hover, game‑over box).
+
+Fixed script filename typos – index.html now correctly references stage.js and drapdrop.js (not state.js and dragdrop.js).
 
 🛠️ Code Improvements
-Simulation Harness for Difficulty Validation
-A standalone Node.js script was built to simulate hundreds of games using the real shape/placement/clear/tray logic. It empirically compared configurations (board size, shape pool, weighting) – for example, it identified the plus‑shaped piece as the single biggest difficulty contributor among Hard shapes.
+Simulation Harness – a standalone Node.js script was built to run hundreds of games empirically, validating difficulty configurations and identifying the plus‑shaped piece as the biggest difficulty contributor.
 
-Cascading Fallback in pickShapeFromPool()
-Reworked to try progressively easier tiers when the requested tier has no placeable shapes, rather than falling back only within the original (possibly unplaceable) tier.
+Cascading Fallback in pickShapeFromPool() – reworked to try easier tiers when the requested tier has no placeable shapes.
 
-Constants Re‑synced with New Board Size
-CELL_SIZE in board.js (used for floating score popup positioning) updated from 50 to 38 to match the new --cell-size; all CSS grid and top‑bar calculations updated accordingly.
+Constants Re‑synced – CELL_SIZE and all CSS grid calculations updated to match the 8×8 board.
 
-🛠️ Technology Stack
-HTML5 – structure.
+📁 Files Overview
+File	Responsibility
+config.js	Grid size, shape lists per tier
+stage.js	Global state (boardState, trayBlocks, cells, slots, etc.)
+board.js	Board logic, row/column clearing, scoring
+tray.js	Tray generation, weighted selection, Hard‑piece cap
+drapdrop.js	Drag‑and‑drop handling (mouse + touch)
+storage-ui.js	Save/load state and UI rendering
+sound.js	Full audio system (SFX + background music)
+index.html	Main HTML structure and script references
+style.css	All styles, theming, and responsive rules
+audio/	Three .mp3 background music tracks
 
-CSS3 – custom properties, Grid, Flexbox, Media Queries, dark mode, accessibility features.
+⚠️ Known Issue
+Background music fails to load when opening index.html directly from disk (file:///...)
 
-JavaScript (ES6+) – modularised into:
+The browser reports:
 
-config.js – global configuration (grid size, shape lists per tier).
+text
+net::ERR_FILE_NOT_FOUND
+Symptoms:
 
-stage.js – global state (boardState, trayBlocks, cells, slots, ...).
+Sound effects (SFX) work perfectly – they are generated at runtime via the Web Audio API and do not depend on external files.
 
-board.js – board logic, row/column clearing, scoring.
+Background music does not play when running the game via file://.
 
-tray.js – tray generation, weighted shape selection, Hard‑piece cap.
+Root Cause:
+The browser resolves the relative path (audio/...) against the on‑disk file location. The exact root cause (case sensitivity, a leftover space in a filename, an unexpected extension, or folder placement) has not yet been confirmed. All filenames in sound.js are specified as:
 
-drapdrop.js – drag‑and‑drop handling (mouse + touch).
+audio/leaving_home.mp3
 
-storage-ui.js – save/load state and UI rendering.
+audio/abandoned.mp3
 
-🚀 How to Run
-Download the entire source code.
+audio/secret_base.mp3
 
-Open index.html in a modern web browser (Chrome, Firefox, Edge, Safari).
+(all lowercase, underscores, no spaces).
 
-The game will start automatically. No additional setup required.
+Workaround / Recommended Solution:
+Serve the project through a local server instead of opening the HTML file directly. This sidesteps file:// protocol quirks entirely and is the recommended way to run the game going forward.
+
+Options include:
+
+VS Code Live Server extension – right‑click index.html and select "Open with Live Server".
+
+Python's built‑in HTTP server – run python -m http.server in the project directory, then open http://localhost:8000 in your browser.
+
+Any other local static server of your choice.
+
+Next Steps to Fix (for contributors):
+
+Confirm the exact on‑disk filenames via "Copy Path" in the file explorer/VS Code and diff them character‑by‑character against what sound.js expects.
+
+Once confirmed, the filenames or the sound.js references can be corrected.
 
 📖 How to Play
 Drag and drop a piece from the tray (at the bottom) onto the 8×8 board.
 
 Arrange pieces to completely fill a horizontal row or a vertical column.
 
-When a row or column is filled, it clears and you earn points.
+When a row or column is filled, it clears and you earn points – the more lines you clear at once, the higher the multiplier.
 
 The game ends when you can no longer place any piece from the current tray.
 
 Aim for the highest score by clearing multiple lines at once and using pieces strategically.
+
 
 🤝 Contributing
 If you find any bugs or have suggestions for improvements, please open an issue or submit a pull request. All contributions are welcome!

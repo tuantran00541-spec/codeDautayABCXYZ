@@ -230,6 +230,8 @@ function tryPlaceBlock(slotIndex, cellIndex) {
     boardState[rowColToIndex(row, col)] = placedColor;
   });
 
+  playPlaceSound(); // tiếng "tick" khi khối chạm xuống lưới (sound.js)
+
   // Xoá khối này khỏi tray (đánh dấu slot đã dùng)
   trayBlocks[slotIndex] = null;
   trayColors[slotIndex] = null;

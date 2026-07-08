@@ -73,6 +73,11 @@ const againGameBtn = document.querySelector('#againGame');
 const newGameBtn = document.querySelector('#newGame');
 const menuBtnBack = document.querySelector('#menuBtnBack');
 
+// Thử phát nhạc menu ngay khi trang tải xong. Trình duyệt sẽ chặn vì chưa có
+// tương tác người dùng (tryPlayMusic() tự bắt lỗi này và bỏ qua trong im lặng),
+// nhạc sẽ thực sự bắt đầu ngay sau cú bấm Start bên dưới.
+playMenuMusic();
+
 // Bắt đầu 1 ván hoàn toàn mới: xoá save cũ, reset toàn bộ state, ra khối mới.
 function startNewGame() {
   clearGameState();
@@ -108,6 +113,7 @@ starGameBtn.addEventListener('click', () => {
     // Chưa có ván nào -> vào thẳng game mới
     logInLoadEl.classList.add('hidden');
     gameWrapperEl.classList.remove('hidden');
+    playInGameMusic();
     startNewGame();
   }
 });
@@ -116,6 +122,7 @@ starGameBtn.addEventListener('click', () => {
 againGameBtn.addEventListener('click', () => {
   resumeChoiceEl.classList.add('hidden');
   gameWrapperEl.classList.remove('hidden');
+  playInGameMusic();
   resumeSavedGame();
 });
 
@@ -123,6 +130,7 @@ againGameBtn.addEventListener('click', () => {
 newGameBtn.addEventListener('click', () => {
   resumeChoiceEl.classList.add('hidden');
   gameWrapperEl.classList.remove('hidden');
+  playInGameMusic();
   startNewGame();
 });
 
@@ -133,4 +141,5 @@ newGameBtn.addEventListener('click', () => {
 menuBtnBack.addEventListener('click', () => {
   gameWrapperEl.classList.add('hidden');
   logInLoadEl.classList.remove('hidden');
+  requestReturnToMenuMusic(); // không cắt nhạc ngay - chờ bài in-game hết mới đổi (sound.js)
 });

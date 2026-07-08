@@ -87,6 +87,7 @@ function clearFullLines() {
   score += gainedScore;
   updateScore();
 
+  playClearSound(finalMultiplier); // tiếng nổ hàng/cột, càng combo cao càng "dày" (sound.js)
   showScorePopup(cellsToClear, gainedScore, finalMultiplier);
 
   return playClearAnimation(cellsToClear, fullRows, fullCols);

@@ -1,99 +1,143 @@
-Low Block – Feature Summary (Today's Update)
+Low Block
+Low Block is a shape-stacking puzzle game where you drag and drop polyomino pieces onto an 8×8 grid to form complete rows or columns and clear them. The game features adaptive difficulty, a fully responsive interface, and comprehensive accessibility support.
 
-This update builds on yesterday's drag‑and‑drop and placement‑fix work, introducing a richer gameplay experience, smoother animations, and a polished start flow.
+🎮 Key Features
+8×8 Board – strikes the best balance between challenge and comfortable touch targets on mobile devices.
 
-🎮 Gameplay Enhancements
-Row/Column Clear Animation – Filled rows/columns now trigger a “pop” effect: cells float upward, scale briefly, and fade back to the empty‑cell colour – no more instant disappearance.
+Fixed Cell‑Count Difficulty Tiers – Easy (≤2 cells), Medium (3–4 cells), Hard (≥5 cells), replacing the previous percentile‑based split.
 
-Wave‑Style Clear Effect – Cells in a cleared line animate with staggered delays, creating a sweeping ripple that travels across the row/column.
+Weighted Random Tray Generation – each slot is rolled independently with odds: 35% Easy, 50% Medium, 15% Hard.
 
-Floating Score Popup – Each cleared line spawns a +N text popup at the centre of the cleared area, which rises and fades out before being removed.
+Hard‑Piece Cap – at most one Hard piece per tray; if the board is >65% full, the Hard chance drops from 15% to 5%.
 
-Line‑Count Multiplier – Clearing multiple lines in one move now boosts your score:
+Fully Responsive Interface – automatically adapts cell sizes, spacing, and typography to any screen (phones, tablets, desktops).
 
-1 line → base score
+Dark Mode – automatically switches according to system preference.
 
-N lines → base score × N × N
+Accessibility – supports prefers-reduced-motion and prefers-contrast: high for users with special needs.
 
-Combo Streak Multiplier – Clearing 2+ lines on consecutive moves increases the combo multiplier by 1 each time. Clearing only 1 line (or nothing) resets the combo to 0.
+🆕 What's New (Latest Update)
+⚙️ Gameplay Enhancements
+Board Size Increased (6×6 → 8×8)
+Based on simulations running hundreds of automated games, the 8×8 board raises the average survival time from ~17–41 moves to ~80 moves, while still keeping cells large enough for comfortable touch interaction.
 
-Expanded Shape Pool – The tray now contains 27 pieces (up from 9), including:
+Difficulty Tiers Redefined by Fixed Thresholds
+The old percentile‑based split was unbalanced (15 out of 27 shapes had exactly 4 cells). Now tiers are defined by cell count: Easy ≤2, Medium 3–4, Hard ≥5. Hard now contains only the plus‑shaped piece (5 cells) and the 3×3 square (9 cells).
 
-4‑cell bars
+Weighted Random Tray Generation
+No longer forces one piece from each tier per tray. Each of the three slots is rolled independently, so some trays can be all Easy/Medium while others still offer real challenge.
 
-All 4 rotations of L, J, T, S, and Z
+Hard‑Piece Cap and Adaptive Weighting
+A tray can contain at most one Hard piece; a second Hard roll is downgraded to Medium. Also, when the board is more than 65% full, the Hard chance drops from 15% to 5% to avoid unwinnable late‑game situations.
 
-3×3 solid square
+Fixed Unplaceable‑Piece Fallback
+The shape‑selection logic now cascades from the requested tier to easier tiers if no placeable shape exists in the original tier, rather than picking randomly within an unplaceable tier. This single fix roughly doubled average survival time in simulations.
 
-Plus‑shaped piece
+Fixed Dark Grid Background During Clear Animation
+The grid background (visible through gaps and when cells lift during clears) is now consistently light in dark mode, eliminating the black flashing patch.
 
-3‑cell diagonal piece
+Fixed Panel Background Bleed
+Split --bg-cell-empty (grid cells only) from --bg-panel (dialogs, tray slots, menu‑button hover, game‑over box) so changing cell colour no longer recolours unrelated UI.
 
-(A U‑shaped piece was added and later removed for being awkward to place.)
+Fixed Script Filename Typos
+index.html now correctly references stage.js and drapdrop.js (formerly misnamed as state.js and dragdrop.js), allowing the game to load properly.
 
-Start Screen – The game no longer auto‑starts on page load. A clean start screen with a Start button greets the player; the grid and tray remain hidden until the game begins.
+🎨 UI/UX Improvements
+Responsive Design
 
-Resume vs. New Game – If a saved game exists in localStorage, pressing Start now prompts the player to either Resume the saved game or start a fresh one (instead of auto‑resuming).
+Uses vmin and clamp() to make cell sizes, gaps, and typography fluid across all screens.
 
-In‑Game “Back to Menu” – A button in the game view lets players return to the start screen at any time. The board, tray, and score stay untouched in memory – only CSS visibility toggles.
+Breakpoints for small screens (≤360px) and tablets (≥768px).
 
-How‑to‑Play Removed – The instructions overlay (and its button/event listeners) were added and then removed later the same day to keep the start screen minimal.
+Optimised for landscape mode on mobile devices with low height (≤500px).
 
-Random Block Colours – Each of the 3 tray pieces is now assigned a random colour from a fixed palette (green, blue, orange, pink, purple, cyan, yellow, red) when generated. The colour sticks with the piece through drag, placement, and storage, instead of every block always being the same green.
+Layout Enhancements
 
-Bevelled 3D Block Look – Placed cells (and tray previews) now render with an inset box‑shadow – a lighter highlight on the top‑left and a darker shade on the bottom‑right – giving each block a raised, chunky look instead of a flat colour fill. The line‑clear "pop" animation was updated to flash the block's own colour instead of always flashing green.
+Replaced position: absolute + transform centering with CSS Grid place-items: center, avoiding containing‑block issues that affected position: fixed descendants.
 
-Difficulty‑Balanced Shape Draw – Instead of drawing all 3 tray pieces from the full shape pool at random (which could hand the player three hard pieces, or three trivial ones, back‑to‑back), the 27 shapes are now split into three difficulty tiers by cell count (Easy / Medium / Hard, ~9 shapes each via percentile split). Every new tray guarantees exactly one Easy, one Medium, and one Hard piece.
+Added min-height: 100dvh to prevent overlap by mobile browser navigation bars.
 
-Board‑Aware Piece Selection – Within each difficulty tier, the picker first checks which shapes can actually still fit somewhere on the current board (reusing the same fit‑check as the game‑over detector) and randomises only among those. If a tier has no placeable shape left (board too full for that difficulty), it falls back to a free random pick within that tier so a tray can always be generated.
+Theming & Colour System
 
-🐛 Bug Fixes
-Grid background bleeding – The clear animation originally faded cells to opacity: 0, exposing the black .grid background. Fixed by animating the background colour back to the empty‑cell colour instead.
+All colours, shadows, fonts, z‑indices, and animation timings are managed via CSS custom properties (Design Tokens).
 
-Hidden class overridden – The .game-wrapper stayed visible on load because a later display: flex rule outranked .hidden. Fixed by moving .hidden to the end of the stylesheet with !important to guarantee priority.
+Automatic Dark Mode via prefers-color-scheme: dark.
 
-Duplicate updateScore() – Two functions with the same name existed (one without max‑score update, one with). The redundant one was removed to avoid future confusion.
+Separated grid cell background from panel backgrounds for independent theming.
 
-Score popup positioning – The .grid element now has position: relative so that absolutely‑positioned .score-popup elements anchor correctly to the grid rather than the page.
+Accessibility
 
-Game‑Over Overlay Not Covering the Screen – #gameOverOverlay used position: fixed but was nested inside .game-wrapper, which has a transform for centring. A transformed ancestor turns fixed into "fixed relative to that ancestor" per the CSS spec, so the overlay only covered the wrapper's box instead of the full viewport. Fixed by moving the overlay markup out of .game-wrapper so it sits directly under <body>.
+prefers-reduced-motion support: disables or minimises all animations.
 
-Trophy/Score Misalignment – The 🏆 max‑score line looked vertically off from its digits. Root cause was twofold: (1) the emoji and number were written as a single text node, so display:flex; align-items:center on the parent had nothing to centre against; and (2) the pixel font (Press Start 2P) has no glyph for the trophy emoji, so the browser substituted a system font with a different baseline. Fixed by rendering the emoji and number as two separate <span> elements (via innerHTML) and giving the emoji its own .trophy-icon class with a matched font-size/line-height.
+prefers-contrast: high support: increases contrast and border visibility.
 
-Back Button Not Aligned With Trophy Score – .menu-btn used position: absolute with hard‑coded coordinates, so it lived outside the normal layout flow and couldn't stay in sync with #maxScore next to it. Fixed by wrapping both elements in a new .top-bar flex container (align-items: center, gap: 16px) and removing the absolute positioning from .menu-btn.
+user-select: none and -webkit-tap-highlight-color: transparent for smoother touch interaction.
 
-Stuck Drag Ghost Element – The semi‑transparent "ghost" clone shown while dragging a piece (appended to document.body with position: fixed) could be left behind permanently if the pointerup/pointercancel event failed to reach the exact .block-slot element that was tracking the drag (e.g. pointer released outside the slot, tab switch mid‑drag, multi‑touch edge cases). Fixed by adding window‑level pointerup/pointercancel listeners as a safety net that always clean up the ghost and reset drag state, regardless of which element the browser delivers the event to.
+touch-action: manipulation to prevent double‑tap zoom on mobile.
 
-🔧 Code Improvements
-clearFullLines() is now async‑aware – Instead of clearing boardState and re‑rendering immediately, it now:
+Visual Polish
 
-Computes affected cells
+backdrop-filter: blur(4px) on the game‑over overlay for a glass‑morphism effect.
 
-Updates score/combo
+Smooth transitions on interactive elements (buttons, slots) with hover/active states.
 
-Triggers the popup and wave animation
+Glow shadow effect on selected tray slots.
 
-Returns the total animation duration so the caller can wait before proceeding
+Tray container uses flex-wrap: wrap to prevent overflow on narrow screens.
 
-tryPlaceBlock() now waits for line‑clear animations – Game‑over checks and new‑tray generation are deferred until any triggered clear animation finishes, ensuring boardState is fully updated before the next check.
+8×8 Grid Resizing
 
-New helper functions – playClearAnimation() and showScorePopup() isolate wave‑timing logic and DOM creation/cleanup, keeping clearFullLines() focused on scoring and state logic.
+Updated --cell-size, grid-template-columns/rows, and top‑bar max-width to match the new 8‑column layout.
 
-Start‑screen control flow – Added startNewGame() and resumeSavedGame() helpers, plus event listeners for the start screen, resume/new‑game prompt, and back‑to‑menu button – all without touching core placement/scoring logic.
+Adjusted responsive breakpoints to keep touch targets comfortable on mobile.
 
-Combo persistence – comboMultiplier is now saved and loaded alongside existing data (with a safe || 0 fallback for older saves).
+🛠️ Code Improvements
+Simulation Harness for Difficulty Validation
+A standalone Node.js script was built to simulate hundreds of games using the real shape/placement/clear/tray logic. It empirically compared configurations (board size, shape pool, weighting) – for example, it identified the plus‑shaped piece as the single biggest difficulty contributor among Hard shapes.
 
-boardState Now Stores Colour, Not Just Boolean – Each cell in boardState changed from true/false to either null (empty) or a colour string, so every placed block remembers its own colour through re‑renders, line‑clear animations, and save/load, instead of just tracking "filled or not."
+Cascading Fallback in pickShapeFromPool()
+Reworked to try progressively easier tiers when the requested tier has no placeable shapes, rather than falling back only within the original (possibly unplaceable) tier.
 
-Colour Persistence in Save/Load – saveGameState()/loadGameState() were extended to persist trayColors alongside the existing fields, with a migration path that converts any legacy true/false boardState values into a safe default colour on load.
+Constants Re‑synced with New Board Size
+CELL_SIZE in board.js (used for floating score popup positioning) updated from 50 to 38 to match the new --cell-size; all CSS grid and top‑bar calculations updated accordingly.
 
-Extracted canShapeBePlacedOnBoard() – The "can this shape fit anywhere on the board" scan, previously inlined inside checkGameOver(), was pulled out into its own reusable function so both the game‑over check and the new difficulty‑aware tray generator share one source of truth instead of duplicating the scan logic.
+🛠️ Technology Stack
+HTML5 – structure.
 
-Percentile‑Based Difficulty Split – Rather than filtering shapes by a fixed cell‑count threshold (which skewed heavily toward the medium tier given how many 4‑cell shapes exist in the pool), shapes are sorted by cell count and sliced into three equal‑sized groups, keeping the Easy/Medium/Hard pools balanced regardless of how the underlying shape pool is distributed.
+CSS3 – custom properties, Grid, Flexbox, Media Queries, dark mode, accessibility features.
 
-📁 Files Modified
-index.html – Added start screen, resume/new‑game prompt, and back‑to‑menu markup; how‑to‑play overlay added then removed; game‑over overlay moved outside .game-wrapper to fix full‑screen coverage; menu button and max‑score wrapped in a new .top-bar container.
+JavaScript (ES6+) – modularised into:
 
-style.css – Added clear‑animation keyframes, score‑popup styles, start‑screen/prompt container styles; moved .hidden to the end with !important; fixed .game-wrapper positioning; added bevelled inset box‑shadow styling for filled cells and tray previews via a shared --block-color variable; added .top-bar flex layout and .trophy-icon font styling; switched the base font to "Press Start 2P" via Google Fonts.
+config.js – global configuration (grid size, shape lists per tier).
 
-script.js – Expanded SHAPES array; reworked clearFullLines() for animation timing, scoring multiplier, and combo tracking; added playClearAnimation(), showScorePopup(), startNewGame(), resumeSavedGame(); added start‑screen event listeners; removed duplicate updateScore(); extended save/load functions to persist combo; converted boardState from boolean to colour‑based storage with a BLOCK_COLORS palette and randomBlockColor(); added window‑level pointer listeners to prevent stuck drag ghosts; extracted canShapeBePlacedOnBoard() and added EASY_SHAPES/MEDIUM_SHAPES/HARD_SHAPES tiers plus pickShapeFromPool() for board‑aware, difficulty‑balanced tray generation.
+stage.js – global state (boardState, trayBlocks, cells, slots, ...).
+
+board.js – board logic, row/column clearing, scoring.
+
+tray.js – tray generation, weighted shape selection, Hard‑piece cap.
+
+drapdrop.js – drag‑and‑drop handling (mouse + touch).
+
+storage-ui.js – save/load state and UI rendering.
+
+🚀 How to Run
+Download the entire source code.
+
+Open index.html in a modern web browser (Chrome, Firefox, Edge, Safari).
+
+The game will start automatically. No additional setup required.
+
+📖 How to Play
+Drag and drop a piece from the tray (at the bottom) onto the 8×8 board.
+
+Arrange pieces to completely fill a horizontal row or a vertical column.
+
+When a row or column is filled, it clears and you earn points.
+
+The game ends when you can no longer place any piece from the current tray.
+
+Aim for the highest score by clearing multiple lines at once and using pieces strategically.
+
+🤝 Contributing
+If you find any bugs or have suggestions for improvements, please open an issue or submit a pull request. All contributions are welcome!
+

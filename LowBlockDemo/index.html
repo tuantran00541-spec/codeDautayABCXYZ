@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
+  <link rel="stylesheet" href="style.css">
+  <title>Low Block</title>
+</head>
+<body>
+<div class="container">
+  <!-- Màn chờ chính -->
+  <div class="log-in-load">
+    <button class="start-game" id="starGame">Start</button>
+  </div>
+
+  <!-- Hộp hỏi tiếp tục / chơi mới (mặc định ẩn) -->
+  <div class="resume-choice hidden" id="resumeChoice">
+    <p>Continue or start a new one?</p>
+    <button class="again-game" id="againGame">Continue</button>
+    <button class="new-game" id="newGame">New Game</button>
+  </div>
+</div>
+
+<div class="game-wrapper hidden">
+<div class="top-bar">
+  <button class="menu-btn" id="menuBtnBack">↩</button>
+  <p id="maxScore">🏆</p>
+</div>
+<p id="score">0</p>
+<!----------------grid---------------->
+<div class="grid">
+  <div class="cell" data-index="0"></div>
+  <div class="cell" data-index="1"></div>
+  <div class="cell" data-index="2"></div>
+  <div class="cell" data-index="3"></div>
+  <div class="cell" data-index="4"></div>
+  <div class="cell" data-index="5"></div>
+  <div class="cell" data-index="6"></div>
+  <div class="cell" data-index="7"></div>
+  <div class="cell" data-index="8"></div>
+  <div class="cell" data-index="9"></div>
+  <div class="cell" data-index="10"></div>
+  <div class="cell" data-index="11"></div>
+  <div class="cell" data-index="12"></div>
+  <div class="cell" data-index="13"></div>
+  <div class="cell" data-index="14"></div>
+  <div class="cell" data-index="15"></div>
+  <div class="cell" data-index="16"></div>
+  <div class="cell" data-index="17"></div>
+  <div class="cell" data-index="18"></div>
+  <div class="cell" data-index="19"></div>
+  <div class="cell" data-index="20"></div>
+  <div class="cell" data-index="21"></div>
+  <div class="cell" data-index="22"></div>
+  <div class="cell" data-index="23"></div>
+  <div class="cell" data-index="24"></div>
+  <div class="cell" data-index="25"></div>
+  <div class="cell" data-index="26"></div>
+  <div class="cell" data-index="27"></div>
+  <div class="cell" data-index="28"></div>
+  <div class="cell" data-index="29"></div>
+  <div class="cell" data-index="30"></div>
+  <div class="cell" data-index="31"></div>
+  <div class="cell" data-index="32"></div>
+  <div class="cell" data-index="33"></div>
+  <div class="cell" data-index="34"></div>
+  <div class="cell" data-index="35"></div>
+  <div class="cell" data-index="36"></div>
+  <div class="cell" data-index="37"></div>
+  <div class="cell" data-index="38"></div>
+  <div class="cell" data-index="39"></div>
+  <div class="cell" data-index="40"></div>
+  <div class="cell" data-index="41"></div>
+  <div class="cell" data-index="42"></div>
+  <div class="cell" data-index="43"></div>
+  <div class="cell" data-index="44"></div>
+  <div class="cell" data-index="45"></div>
+  <div class="cell" data-index="46"></div>
+  <div class="cell" data-index="47"></div>
+  <div class="cell" data-index="48"></div>
+  <div class="cell" data-index="49"></div>
+  <div class="cell" data-index="50"></div>
+  <div class="cell" data-index="51"></div>
+  <div class="cell" data-index="52"></div>
+  <div class="cell" data-index="53"></div>
+  <div class="cell" data-index="54"></div>
+  <div class="cell" data-index="55"></div>
+  <div class="cell" data-index="56"></div>
+  <div class="cell" data-index="57"></div>
+  <div class="cell" data-index="58"></div>
+  <div class="cell" data-index="59"></div>
+  <div class="cell" data-index="60"></div>
+  <div class="cell" data-index="61"></div>
+  <div class="cell" data-index="62"></div>
+  <div class="cell" data-index="63"></div>
+</div>
+<!----------------grid--------------->
+<!----------------tray------------------->
+<div class="tray">
+  <div class="block-slot" data-slot="0"></div>
+  <div class="block-slot" data-slot="1"></div>
+  <div class="block-slot" data-slot="2"></div>
+</div>
+<!----------------------------------->
+
+</div>
+
+<!----------------game over overlay------------------->
+<!-- Đặt ngoài .game-wrapper vì .game-wrapper có transform (để căn giữa),
+     mà transform trên ancestor sẽ biến position:fixed của phần tử con
+     thành "fixed theo ancestor đó" thay vì theo toàn viewport (spec CSS).
+     Kết quả là overlay chỉ phủ vừa khung .game-wrapper thay vì phủ kín màn hình. -->
+<div class="game-over-overlay" id="gameOverOverlay">
+  <div class="game-over-box">
+    <h1>GAME OVER</h1>
+    <p class="final-score" id="finalScore">0</p>
+    <button class="reset-btn" id="reset">⟳</button>
+  </div>
+</div>
+<!----------------------------------------------------->
+
+  <script src="config.js"></script>
+  <script src="stage.js"></script>
+  <script src="board.js"></script>
+  <script src="tray.js"></script>
+  <script src="drapdrop.js"></script>
+  <script src="storage-ui.js"></script>
+</body>
+</html>

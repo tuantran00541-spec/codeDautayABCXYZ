@@ -5,18 +5,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:,">
   <title>Low Block</title>
 </head>
 <body>
 <div class="container">
-  <!-- Màn chờ chính -->
   <div class="log-in-load">
     <button class="start-game" id="starGame">Start</button>
   </div>
 
-  <!-- Hộp hỏi tiếp tục / chơi mới (mặc định ẩn) -->
   <div class="resume-choice hidden" id="resumeChoice">
     <p>Continue or start a new one?</p>
     <button class="again-game" id="againGame">Continue</button>
@@ -31,7 +30,6 @@
   <button class="menu-btn" id="muteBtn" aria-label="Tắt âm thanh">🔊</button>
 </div>
 <p id="score">0</p>
-<!----------------grid---------------->
 <div class="grid">
   <div class="cell" data-index="0"></div>
   <div class="cell" data-index="1"></div>
@@ -98,22 +96,14 @@
   <div class="cell" data-index="62"></div>
   <div class="cell" data-index="63"></div>
 </div>
-<!----------------grid--------------->
-<!----------------tray------------------->
 <div class="tray">
   <div class="block-slot" data-slot="0"></div>
   <div class="block-slot" data-slot="1"></div>
   <div class="block-slot" data-slot="2"></div>
 </div>
-<!----------------------------------->
 
 </div>
 
-<!----------------game over overlay------------------->
-<!-- Đặt ngoài .game-wrapper vì .game-wrapper có transform (để căn giữa),
-     mà transform trên ancestor sẽ biến position:fixed của phần tử con
-     thành "fixed theo ancestor đó" thay vì theo toàn viewport (spec CSS).
-     Kết quả là overlay chỉ phủ vừa khung .game-wrapper thay vì phủ kín màn hình. -->
 <div class="game-over-overlay" id="gameOverOverlay">
   <div class="game-over-box">
     <h1>GAME OVER</h1>
@@ -121,7 +111,6 @@
     <button class="reset-btn" id="reset">⟳</button>
   </div>
 </div>
-<!----------------------------------------------------->
 
   <script src="config.js"></script>
   <script src="sound.js"></script>

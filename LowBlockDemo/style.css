@@ -1,11 +1,8 @@
-/* ---- CSS Variables (Design Tokens) ---- */
 :root {
-  /* Kích thước động: dùng vmin để responsive mọi màn hình */
   --cell-size: min(38px, 10vmin);
   --cell-gap: 1px;
   --grid-border: 3px;
-  
-  /* Màu sắc - Light Mode (mặc định) */
+
   --bg-body: #f5f5f5;
   --bg-grid: #e0e0e0;
   --bg-cell-empty: #eeeeee;
@@ -13,39 +10,35 @@
   --bg-cell-preview: #a5d6a7;
   --bg-cell-preview-invalid: #ef9a9a;
   --bg-overlay: rgba(0, 0, 0, 0.6);
-  
+
   --color-text: #333333;
   --color-text-light: #666666;
   --color-accent: #4caf50;
   --color-accent-hover: #43a047;
   --color-danger: #d32f2f;
   --color-score: #ff9800;
-  
+
   --shadow-grid: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
   --shadow-popup: 0 10px 30px rgba(0, 0, 0, 0.3);
   --shadow-bevel-light: inset 3px 3px 0 rgba(255, 255, 255, 0.45);
   --shadow-bevel-dark: inset -3px -3px 0 rgba(0, 0, 0, 0.25);
   --shadow-bevel-mini-light: inset 2px 2px 0 rgba(255, 255, 255, 0.45);
   --shadow-bevel-mini-dark: inset -2px -2px 0 rgba(0, 0, 0, 0.25);
-  
-  /* Font */
+
   --font-pixel: "Press Start 2P", "Courier New", monospace;
   --font-system: system-ui, -apple-system, sans-serif;
-  
-  /* Z-index layers */
+
   --z-grid: 1;
   --z-clearing: 2;
   --z-popup: 10;
   --z-ghost: 1000;
   --z-overlay: 999;
-  
-  /* Timing */
+
   --dur-clear: 0.45s;
   --dur-popup: 0.9s;
   --dur-popin: 0.25s;
 }
 
-/* ---- Dark Mode (tự động theo hệ thống) ---- */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg-body: #1a1a2e;
@@ -62,7 +55,6 @@
   }
 }
 
-/* ---- Reset & Base ---- */
 *, *::before, *::after {
   padding: 0;
   margin: 0;
@@ -70,7 +62,6 @@
 }
 
 html {
-  /* Ngăn zoom khi double-tap trên mobile */
   touch-action: manipulation;
 }
 
@@ -81,16 +72,15 @@ body {
   background: var(--bg-body);
   color: var(--color-text);
   min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height - tránh thanh nav mobile */
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  overflow: hidden; /* Ngăn scroll khi chơi */
+  overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ---- Container chính ---- */
 .container {
   display: flex;
   align-items: center;
@@ -99,7 +89,6 @@ body {
   padding: 16px;
 }
 
-/* ---- Màn chờ & Dialog ---- */
 .log-in-load,
 .resume-choice {
   background: var(--bg-panel);
@@ -138,7 +127,6 @@ body {
   transform: translateY(0) scale(0.98);
 }
 
-/* ---- Game Wrapper ---- */
 .game-wrapper {
   display: flex;
   flex-direction: column;
@@ -150,7 +138,6 @@ body {
   touch-action: none;
 }
 
-/* ---- Top Bar ---- */
 .top-bar {
   display: flex;
   align-items: center;
@@ -210,7 +197,6 @@ body {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ---- Grid (Lưới 6x6) ---- */
 .grid {
   position: relative;
   display: grid;
@@ -232,7 +218,6 @@ body {
   transition: background 0.15s ease;
 }
 
-/* ---- Cell States ---- */
 .cell.filled {
   background: var(--block-color, var(--color-accent));
   box-shadow: var(--shadow-bevel-light), var(--shadow-bevel-dark);
@@ -246,7 +231,6 @@ body {
   background: var(--bg-cell-preview-invalid);
 }
 
-/* ---- Clear Animation ---- */
 .cell.clearing {
   animation: cellPop var(--dur-clear) ease forwards;
   z-index: var(--z-clearing);
@@ -268,7 +252,6 @@ body {
   }
 }
 
-/* ---- Score Popup ---- */
 .score-popup {
   position: absolute;
   left: 0;
@@ -299,7 +282,6 @@ body {
   }
 }
 
-/* ---- Tray ---- */
 .tray {
   display: flex;
   gap: clamp(10px, 3vw, 20px);
@@ -337,7 +319,6 @@ body {
   transform: scale(0.95);
 }
 
-/* ---- Mini Grid (trong tray) ---- */
 .mini-grid {
   display: grid;
   gap: 2px;
@@ -349,7 +330,6 @@ body {
   border-radius: 3px;
 }
 
-/* ---- Game Over Overlay ---- */
 .game-over-overlay {
   display: none;
   position: fixed;
@@ -425,22 +405,20 @@ body {
   }
 }
 
-/* ---- Utility ---- */
 .hidden {
   display: none !important;
 }
 
-/* ---- Responsive Adjustments ---- */
 @media (max-width: 360px) {
   :root {
     --cell-size: min(34px, 9vmin);
   }
-  
+
   .game-wrapper {
     padding: 8px;
     gap: 8px;
   }
-  
+
   .tray {
     gap: 8px;
   }
@@ -450,13 +428,12 @@ body {
   :root {
     --cell-size: min(41px, 7.5vmin);
   }
-  
+
   .game-wrapper {
     max-width: 600px;
   }
 }
 
-/* ---- Landscape mode trên mobile thấp ---- */
 @media (max-height: 500px) and (orientation: landscape) {
   .game-wrapper {
     flex-direction: row;
@@ -465,20 +442,19 @@ body {
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .top-bar {
     width: auto;
     flex-direction: column;
     order: -1;
   }
-  
+
   .tray {
     margin-top: 0;
     flex-direction: column;
   }
 }
 
-/* ---- Reduced Motion (Accessibility) ---- */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -487,19 +463,18 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   .cell.clearing {
     animation: none;
     opacity: 0;
   }
-  
+
   .score-popup {
     animation: none;
     opacity: 1;
   }
 }
 
-/* ---- High Contrast Mode (Accessibility) ---- */
 @media (prefers-contrast: high) {
   :root {
     --bg-cell-preview: #00ff00;
@@ -507,7 +482,7 @@ body {
     --color-accent: #008000;
     --grid-border: 4px;
   }
-  
+
   .cell.filled {
     border: 2px solid white;
   }

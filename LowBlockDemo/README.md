@@ -1,103 +1,49 @@
-# Low Block — Update Log: Audio Implementation
+Low Block — Update Log: Audio Fixes, Code Cleanup & Deployment
 
-This entry documents the audio system added to Low Block in this session:
-sound effects (SFX) for gameplay actions and a looping background music
-system with context-aware track switching.
+This entry documents the work done in this session, following up on the previous audio implementation. Focus was on diagnosing why background music wasn't playing in various scenarios, cleaning up the codebase, and getting the project properly hosted on GitHub.
 
-## 🔊 What Was Added
+🐛 Bugs Found & Fixed
 
-### Sound Effects (Web Audio API, synth-based)
-No external audio files are used for SFX — all tones are generated at
-runtime with oscillators, matching the game's retro pixel-art aesthetic.
+1. 404 — Missing `audio/` folder
+The `audio/` folder with the three mp3 tracks didn't exist on disk yet, only referenced in `sound.js`. Sound effects (synth-based, no files needed) worked fine, but background music silently failed. Fixed by creating `audio/` alongside `index.html` and adding the three tracks with exact matching filenames (case-sensitive, no stray spaces).
 
-- **Block placement** — a short, low-key "tick" (square wave, 320 Hz,
-  ~70ms) plays every time a piece is successfully placed on the board.
-  Kept deliberately subtle since this is the most frequent action in the
-  game.
-- **Line clear** — a short ascending arpeggio (triangle wave) plays when
-  one or more rows/columns clear. The number of notes and their spacing
-  scale with the clear's score multiplier, so higher combos sound
-  noticeably "bigger" and more satisfying than a single-line clear.
-- **Mute toggle feedback** — a single confirmation tone plays when sound
-  is turned back on, so the player gets audible confirmation the toggle
-  worked.
+2. `net::ERR_CONNECTION_REFUSED` — Live Server not running
+At one point Live Server had stopped running mid-session, so every request (including audio) was refused outright rather than 404'd. Fixed by restarting Live Server ("Go Live") and doing a hard reload (`Ctrl+Shift+R`).
 
-### Background Music (HTML `<audio>`, real mp3 files)
-Three tracks are used, stored in `audio/`:
+3. Menu music never actually played, even after clicking Start
+Root cause: `playMenuMusic()` is called once, immediately on page load — before any user interaction — so the browser's autoplay policy silently blocks it (the `.catch()` in `tryPlayMusic()` swallows the rejection). The `starGameBtn` click handler was supposed to be the moment autoplay gets "unlocked," but in the branch where a saved game exists, it only showed the Continue/New Game dialog and never called `.play()` again. Result: `leavinghome.mp3` / `abandoned.mp3` could never start, no matter how many times Start was clicked.
+Fix: added a `tryPlayMusic()` call at the very top of the `starGameBtn` click handler in `storage-ui.js`, so the first valid click always attempts to resume/start the current menu track regardless of which branch runs afterward.
+The "in-game track finishes naturally before switching back to menu on ↩" behavior was intentionally left unchanged, as designed.
 
-| File | Role |
-|---|---|
-| `audio/leaving_home.mp3` | Menu track (candidate 1) |
-| `audio/abandoned.mp3` | Menu track (candidate 2) |
-| `audio/secret_base.mp3` | In-game track |
+4. `favicon.ico` 404
+Harmless — the browser auto-requests a favicon that doesn't exist in the project. Does not affect gameplay or audio. Optionally silenced by adding `<link rel="icon" href="data:,">` to `index.html`'s `<head>` (added).
 
-**Behavior:**
-- On page load / whenever the start menu is showing, one of the two menu
-  tracks is chosen at random and looped.
-- When the player starts or resumes a game, playback switches to
-  `secret_base.mp3`, looped for the duration of play.
-- When the player presses the back-to-menu button (↩) *during* a game,
-  the in-game track is **not** cut off immediately. It's allowed to
-  finish its current playthrough naturally; only then does the game pick
-  a new random menu track. If the player jumps back into a game before
-  that happens, the in-game track simply continues uninterrupted.
-- Looping is handled manually in JS (`ended` event) rather than via the
-  native `audio.loop` attribute, specifically so this "let it finish,
-  then switch" behavior is possible — `loop = true` would prevent the
-  `ended` event from ever firing.
-- Because browsers block audio autoplay before any user interaction, the
-  first menu track attempt on page load will silently fail and only
-  actually start playing right after the player's first click (the
-  "Start" button), which counts as a valid interaction.
+🧹 Code Cleanup
+All `.js`, `.html`, and `.css` files had their internal comments stripped for readability, with zero logic changes:
+`config.js`, `stage.js`, `board.js`, `tray.js`, `drapdrop.js`, `sound.js`, `storage-ui.js`, `index.html`, `style.css`
+Every file was re-verified (`node --check`) after cleanup to confirm no syntax errors were introduced.
 
-### Mute Button
-- A single 🔊/🔇 button was added to the top bar (next to the existing
-  menu/back button).
-- It controls **both** SFX and background music together — there is no
-  separate volume control for each.
-- Mute state is persisted in `localStorage` (`soundMuted`), so it's
-  remembered across page reloads.
+📦 GitHub Deployment
+Project pushed to a public GitHub repository (`LowBlockDemo`).
+`audio/` folder with all three tracks confirmed present and correctly placed relative to `index.html`, matching the relative paths used in `sound.js`.
+Cleaned up duplicate/stray mp3 files that had been accidentally uploaded to the repo root instead of `audio/` in an earlier upload attempt.
 
-## 📁 Files Changed
+✅ Current Status
+Sound effects: working.
+Background music (menu + in-game): working, including on first load and after Start.
+No blocking console errors remain (`favicon.ico` 404 is cosmetic only).
+Repository structure is clean and matches what the code expects — ready to be served via Live Server, GitHub Pages, or any static host.
 
-- `sound.js` — added the full background-music module (track selection,
-  play/pause logic, menu ⇄ in-game switching) alongside the existing SFX
-  functions; mute toggle now also calls `applyMuteToMusic()`.
-- `tray.js` — calls `playPlaceSound()` right after a piece is committed
-  to `boardState`.
-- `board.js` — calls `playClearSound(finalMultiplier)` inside
-  `clearFullLines()`, right after the score/multiplier for the clear is
-  computed.
-- `storage-ui.js` — wires music calls into the existing screen-transition
-  points: `playMenuMusic()` on initial load, `playInGameMusic()` on
-  Start/Continue/New Game, `requestReturnToMenuMusic()` on the ↩ button.
-- `index.html` — added the mute button markup and the `sound.js`
-  `<script>` tag (loaded before the other gameplay scripts, since they
-  call into it).
-- `audio/` — new folder holding the three `.mp3` tracks.
+📁 Files Touched This Session
+`storage-ui.js` — added `tryPlayMusic()` call in the Start button handler (see fix #3); comments stripped.
+`sound.js`, `board.js`, `config.js`, `stage.js`, `tray.js`, `drapdrop.js` — comments stripped, no logic changes.
+`index.html` — added `<link rel="icon" href="data:,">`; comments stripped.
+`style.css` — comments stripped.
+`audio/` — verified contents and correct placement in the GitHub repo; removed stray duplicate files from repo root.
 
-## ⚠️ Known Issue (Not Yet Fixed)
-
-Background music currently fails to load when running the game by
-opening `index.html` directly from disk (`file:///...`), reporting:
-
-------------------------
-net::ERR_FILE_NOT_FOUND
-------------------------
-
-This was traced to the browser resolving the relative path (`audio/...`)
-against the actual on-disk file location — the exact root cause (case
-sensitivity, a leftover space in a filename, an unexpected extension, or
-folder placement) has not been confirmed yet. Sound effects (which don't
-depend on external files) work fine; only the background music `<audio>`
-tracks are affected.
-
-**Next steps to try:**
-1. Confirm the exact on-disk filename via "Copy Path" in the file
-   explorer/VS Code and diff it character-by-character against what
-   `sound.js` expects (`audio/leaving_home.mp3`, `audio/abandoned.mp3`,
-   `audio/secret_base.mp3` — all lowercase, underscores, no spaces).
-2. Alternatively, serve the project through a local server (e.g. VS
+🔜 Next Steps
+Optional: set up GitHub Pages for a public playable link (not yet configured).
+General code optimization pass, as planned going forward.
    Code's "Live Server" extension, or `python -m http.server`) instead of
    opening the HTML file directly — this sidesteps `file://` protocol
    quirks entirely and is the recommended way to run the game going

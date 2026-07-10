@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Forge — Tạo giọng đọc AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0b0d10;
+    --bg-panel: #14171c;
+    --bg-panel-raised: #1a1e24;
+    --line: #262b33;
+    --line-bright: #3a4150;
+    --text: #e8eaed;
+    --text-dim: #8a919e;
+    --text-faint: #565d68;
+    --accent: #7dd3c0;
+    --accent-dim: #4a9b8a;
+    --accent-glow: rgba(125, 211, 192, 0.15);
+    --warn: #e8a94a;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(125,211,192,0.06) 0%, transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(125,211,192,0.04) 0%, transparent 40%);
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* ---- Header ---- */
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .brand {
+    font-size: 15px;
+    font-family: var(--mono);
+    color: var(--text-faint);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .status-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    transition: background 0.3s;
+  }
+  .dot.online { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .dot.offline { background: #e05a5a; }
+
+  h1 {
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 18px 0 6px;
+  }
+  h1 span { color: var(--accent); }
+
+  .subhead {
+    color: var(--text-dim);
+    font-size: 15px;
+    max-width: 46ch;
+    margin-bottom: 36px;
+  }
+
+  /* ---- Waveform signature ---- */
+  .waveform {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 36px;
+    margin: 28px 0;
+    opacity: 0.85;
+  }
+  .waveform .bar {
+    flex: 1;
+    background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+    border-radius: 2px;
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+  }
+
+  /* ---- Panel ---- */
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .panel-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-label::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* ---- Voice mode selector ---- */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .mode-card {
+    background: var(--bg-panel-raised);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+  .mode-card:hover { border-color: var(--line-bright); }
+  .mode-card.active {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, var(--accent-glow), transparent);
+  }
+  .mode-card .mode-title {
+    font-weight: 600;
+    font-size: 14.5px;
+    margin-bottom: 3px;
+  }
+  .mode-card .mode-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+  .mode-card.active .mode-title { color: var(--accent); }
+
+  /* ---- Language pills ---- */
+  .lang-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .lang-pill {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-faint);
+    cursor: not-allowed;
+  }
+  .lang-pill.enabled {
+    color: var(--text-dim);
+    cursor: pointer;
+    border-color: var(--line-bright);
+  }
+  .lang-pill.selected {
+    color: var(--bg);
+    background: var(--accent);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ---- Textarea ---- */
+  textarea {
+    width: 100%;
+    background: var(--bg-panel-raised);
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 110px;
+    transition: border-color 0.15s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea::placeholder { color: var(--text-faint); }
+
+  .char-count {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .char-count.warn { color: var(--warn); }
+
+  /* ---- Generate button ---- */
+  .generate-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #08110f;
+    border: none;
+    border-radius: 10px;
+    padding: 16px;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    margin-top: 18px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .generate-btn:hover:not(:disabled) { background: #8fe0cf; transform: translateY(-1px); }
+  .generate-btn:disabled {
+    background: var(--line);
+    color: var(--text-faint);
+    cursor: not-allowed;
+  }
+
+  .spinner {
+    width: 15px; height: 15px;
+    border: 2px solid rgba(8,17,15,0.25);
+    border-top-color: #08110f;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .generate-btn.loading .spinner { display: inline-block; }
+  .generate-btn.loading .btn-text { opacity: 0.7; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- Result panel ---- */
+  .result-panel {
+    display: none;
+  }
+  .result-panel.show { display: block; }
+
+  audio {
+    width: 100%;
+    margin-top: 4px;
+    filter: invert(0.9) hue-rotate(140deg);
+    border-radius: 8px;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .btn-secondary {
+    flex: 1;
+    background: transparent;
+    border: 1.5px solid var(--line-bright);
+    color: var(--text);
+    padding: 11px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    text-decoration: none;
+    text-align: center;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---- Error banner ---- */
+  .error-banner {
+    display: none;
+    background: rgba(224, 90, 90, 0.1);
+    border: 1px solid rgba(224, 90, 90, 0.35);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    color: #f0a0a0;
+    margin-top: 16px;
+    line-height: 1.5;
+  }
+  .error-banner.show { display: block; }
+
+  /* ---- Config link ---- */
+  .config-note {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: center;
+    margin-top: 28px;
+    cursor: pointer;
+  }
+  .config-note:hover { color: var(--text-dim); }
+
+  .config-panel {
+    display: none;
+    margin-top: 12px;
+  }
+  .config-panel.show { display: block; }
+  .config-panel input {
+    width: 100%;
+    background: var(--bg-panel-raised);
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .config-panel input:focus { outline: none; border-color: var(--accent); }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--text-faint);
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 30px; }
+    .mode-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="brand">Voice Forge</div>
+    <div class="status-dot"><span class="dot" id="statusDot"></span><span id="statusText">Đang kiểm tra...</span></div>
+  </header>
+
+  <h1>Gõ chữ.<br>Nghe bằng <span>giọng nhân vật</span>.</h1>
+  <p class="subhead">Nhập văn bản, chọn ngôn ngữ, và nghe lại bằng giọng đã được nhân bản từ nhân vật game bạn yêu thích.</p>
+
+  <div class="waveform" id="waveform"></div>
+
+  <div class="panel">
+    <div class="panel-label">Chọn giọng đọc</div>
+    <div class="mode-grid" id="voiceGrid">
+      <div class="mode-card" style="grid-column: 1 / -1; text-align:center; color: var(--text-faint); font-family: var(--mono); font-size: 12px;">
+        Đang tải danh sách giọng...
+      </div>
+    </div>
+
+    <div class="lang-row" id="langRow"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Nội dung cần đọc</div>
+    <textarea id="textInput" placeholder="Nhập văn bản ở đây..." maxlength="500"></textarea>
+    <div class="char-count"><span id="charCount">0 / 500</span><span id="langHint">Ngôn ngữ: English</span></div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generateSpeech()">
+      <span class="spinner"></span>
+      <span class="btn-text">Tạo giọng đọc</span>
+    </button>
+
+    <div class="error-banner" id="errorBanner"></div>
+  </div>
+
+  <div class="panel result-panel" id="resultPanel">
+    <div class="panel-label">Kết quả</div>
+    <audio controls id="audioPlayer"></audio>
+    <div class="result-actions">
+      <a class="btn-secondary" id="downloadBtn" download="voice_forge_output.wav">Tải về</a>
+      <button class="btn-secondary" onclick="generateSpeech()">Tạo lại</button>
+    </div>
+  </div>
+
+  <div class="config-note" onclick="toggleConfig()">⚙ Cấu hình địa chỉ API</div>
+  <div class="config-panel" id="configPanel">
+    <input type="text" id="apiUrlInput" placeholder="https://xxxx.ngrok-free.app">
+  </div>
+
+  <footer>VOICE FORGE · CÔNG NGHỆ XTTS-V2 / VIXTTS · CHIA SẺ NỘI BỘ</footer>
+</div>
+
+<script>
+  // ====== Cấu hình ======
+  const STORAGE_KEY = 'voiceforge_api_url';
+
+  // ====== Khởi tạo sóng âm trang trí ======
+  const waveform = document.getElementById('waveform');
+  for (let i = 0; i < 48; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.animationDelay = (Math.random() * 1.8) + 's';
+    bar.style.opacity = 0.4 + Math.random() * 0.6;
+    waveform.appendChild(bar);
+  }
+
+  // ====== API URL config ======
+  function getApiUrl() {
+    return localStorage.getItem(STORAGE_KEY) || '';
+  }
+  function setApiUrl(url) {
+    localStorage.setItem(STORAGE_KEY, url.trim().replace(/\/$/, ''));
+  }
+  function toggleConfig() {
+    document.getElementById('configPanel').classList.toggle('show');
+  }
+  const apiInput = document.getElementById('apiUrlInput');
+  apiInput.value = getApiUrl();
+  apiInput.addEventListener('change', () => {
+    setApiUrl(apiInput.value);
+    checkApiStatus();
+    loadVoices();
+  });
+
+  // ====== Voice & language state ======
+  let VOICES = [];
+  let currentVoiceId = null;
+  let currentLang = null;
+
+  const LANG_NAMES = { en: 'English', ja: '日本語', vi: 'Tiếng Việt' };
+
+  async function loadVoices() {
+    const url = getApiUrl();
+    const grid = document.getElementById('voiceGrid');
+
+    if (!url) {
+      grid.innerHTML = `<div class="mode-card" style="grid-column: 1 / -1; text-align:center; color: var(--text-faint); font-family: var(--mono); font-size: 12px;">Chưa cấu hình API — bấm "⚙ Cấu hình địa chỉ API" bên dưới</div>`;
+      return;
+    }
+
+    try {
+      const res = await fetch(url + '/voices', {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      });
+      if (!res.ok) throw new Error('Không lấy được danh sách giọng');
+      VOICES = await res.json();
+
+      if (VOICES.length === 0) {
+        grid.innerHTML = `<div class="mode-card" style="grid-column: 1 / -1; text-align:center; color: var(--text-faint); font-family: var(--mono); font-size: 12px;">Chưa có giọng nào được cấu hình trên server</div>`;
+        return;
+      }
+
+      grid.innerHTML = '';
+      VOICES.forEach((v, idx) => {
+        const card = document.createElement('div');
+        card.className = 'mode-card' + (idx === 0 ? ' active' : '');
+        card.dataset.voiceId = v.id;
+        card.onclick = () => selectVoice(v.id);
+        card.innerHTML = `
+          <div class="mode-title">${v.name}</div>
+          <div class="mode-sub">${v.type === 'custom' ? 'Giọng nhân vật' : 'Giọng có sẵn'} · ${v.languages.map(l => l.toUpperCase()).join('/')}</div>
+        `;
+        grid.appendChild(card);
+      });
+
+      selectVoice(VOICES[0].id);
+
+    } catch (e) {
+      grid.innerHTML = `<div class="mode-card" style="grid-column: 1 / -1; text-align:center; color: var(--text-faint); font-family: var(--mono); font-size: 12px;">Không kết nối được API để lấy danh sách giọng</div>`;
+    }
+  }
+
+  function selectVoice(voiceId) {
+    currentVoiceId = voiceId;
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.toggle('active', c.dataset.voiceId === voiceId));
+
+    const voice = VOICES.find(v => v.id === voiceId);
+    const langRow = document.getElementById('langRow');
+    langRow.innerHTML = '';
+
+    if (voice) {
+      voice.languages.forEach((lang, idx) => {
+        const pill = document.createElement('button');
+        pill.className = 'lang-pill enabled' + (idx === 0 ? ' selected' : '');
+        pill.dataset.lang = lang;
+        pill.textContent = LANG_NAMES[lang] || lang;
+        pill.onclick = () => selectLang(lang);
+        langRow.appendChild(pill);
+      });
+      currentLang = voice.languages[0];
+    }
+    updateLangHint();
+  }
+
+  function selectLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-pill').forEach(p => p.classList.toggle('selected', p.dataset.lang === lang));
+    updateLangHint();
+  }
+
+  function updateLangHint() {
+    document.getElementById('langHint').textContent = currentLang ? 'Ngôn ngữ: ' + (LANG_NAMES[currentLang] || currentLang) : '';
+  }
+
+  // ====== Character counter ======
+  const textInput = document.getElementById('textInput');
+  const charCount = document.getElementById('charCount');
+  textInput.addEventListener('input', () => {
+    const len = textInput.value.length;
+    charCount.textContent = `${len} / 500`;
+    charCount.classList.toggle('warn', len > 450);
+  });
+
+  // ====== API status check ======
+  async function checkApiStatus() {
+    const url = getApiUrl();
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+
+    if (!url) {
+      dot.className = 'dot offline';
+      text.textContent = 'Chưa cấu hình API';
+      return;
+    }
+
+    try {
+      const res = await fetch(url + '/', {
+        method: 'GET',
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      });
+      if (res.ok) {
+        dot.className = 'dot online';
+        text.textContent = 'API sẵn sàng';
+      } else {
+        throw new Error();
+      }
+    } catch (e) {
+      dot.className = 'dot offline';
+      text.textContent = 'Không kết nối được';
+    }
+  }
+  checkApiStatus();
+  setInterval(checkApiStatus, 30000);
+
+  // ====== Generate speech ======
+  async function generateSpeech() {
+    const text = textInput.value.trim();
+    const apiUrl = getApiUrl();
+    const btn = document.getElementById('generateBtn');
+    const errorBanner = document.getElementById('errorBanner');
+    const resultPanel = document.getElementById('resultPanel');
+
+    errorBanner.classList.remove('show');
+    resultPanel.classList.remove('show');
+
+    if (!apiUrl) {
+      errorBanner.textContent = 'Chưa cấu hình địa chỉ API. Bấm "⚙ Cấu hình địa chỉ API" bên dưới và dán link ngrok vào.';
+      errorBanner.classList.add('show');
+      toggleConfig();
+      return;
+    }
+    if (!text) {
+      errorBanner.textContent = 'Vui lòng nhập nội dung cần đọc.';
+      errorBanner.classList.add('show');
+      return;
+    }
+    if (!currentVoiceId) {
+      errorBanner.textContent = 'Chưa chọn giọng đọc. Kiểm tra lại kết nối API hoặc chọn 1 giọng ở trên.';
+      errorBanner.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.querySelector('.btn-text').textContent = 'Đang tạo (có thể mất 10-40 giây)...';
+
+    try {
+      const res = await fetch(apiUrl + '/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify({ text: text, language: currentLang, voice_id: currentVoiceId })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `Lỗi server (${res.status})`);
+      }
+
+      const blob = await res.blob();
+      const audioUrl = URL.createObjectURL(blob);
+
+      const player = document.getElementById('audioPlayer');
+      player.src = audioUrl;
+
+      const downloadBtn = document.getElementById('downloadBtn');
+      downloadBtn.href = audioUrl;
+
+      resultPanel.classList.add('show');
+      resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      player.play().catch(() => {});
+
+    } catch (err) {
+      errorBanner.textContent = 'Không tạo được audio: ' + err.message + '. Kiểm tra lại API có đang chạy không (mở Colab, xem cell server còn chạy không), hoặc link ngrok đã đổi chưa.';
+      errorBanner.classList.add('show');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.querySelector('.btn-text').textContent = 'Tạo giọng đọc';
+    }
+  }
+
+  loadVoices();
+</script>
+
+</body>
+</html>

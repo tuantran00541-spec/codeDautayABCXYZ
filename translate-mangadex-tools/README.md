@@ -54,7 +54,7 @@ Nothing else — no paid APIs, no local install, no GPU of your own (Colab provi
 Setup
 
 
-Open 00_pipeline_full_paddleocr_fixed.ipynb in Google Colab.
+Open pipeline_full.ipynb in Google Colab.
 Add your Groq API key to Colab Secrets (🔑 icon in the left sidebar) under the name GROQ_API_KEY.
 Set CHAPTER_ID in the first configuration cell to the ID of the chapter you want to translate (from its MangaDex URL, e.g. mangadex.org/chapter/<CHAPTER_ID>).
 Run all cells top to bottom. Steps that install a venv (OCR, translation, inpainting) take a few minutes each on first run per session — Colab's temporary disk is wiped between sessions, so these install cells need to be re-run each time you open a new session (results already saved to Drive are not affected).
@@ -74,7 +74,7 @@ Currently coupled to MangaDex as the image source; other sources would need a sm
 Repository structure
 
 
-00_pipeline_full_paddleocr_fixed.ipynb — the full pipeline, run this one end to end
+pipeline_full.ipynb — the full pipeline, run this one end to end
 01_mangadex_downloader.ipynb — standalone Step 1 (download only)
 02_ocr_paddleocr.ipynb — standalone Step 2 (OCR only)
 03_translate_*.ipynb — standalone Step 3 (translation only; Groq and LibreTranslate/Argos variants)

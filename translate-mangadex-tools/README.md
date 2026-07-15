@@ -37,7 +37,7 @@ Everything runs in one notebook, top to bottom, sharing a single `CHAPTER_ID`. S
 
 ## Setup
 
-1. Open `00_pipeline_full_paddleocr_fixed.ipynb` in Google Colab.
+1. Open `pipeline_full.ipynb` in Google Colab.
 2. Add your Groq key to Colab Secrets (🔑 in the left sidebar) as `GROQ_API_KEY`.
 3. In the config cell (Step 0), set `CHAPTER_ID` to the chapter you want, taken from its MangaDex URL:
    `mangadex.org/chapter/<CHAPTER_ID>` → that ID.

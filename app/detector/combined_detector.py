@@ -1,0 +1,80 @@
+import numpy as np
+from app.detector.bubble_detector import YoloDetector, BubbleBox
+from app.config import (
+    BUBBLE_DETECTOR_MODEL,
+    TEXT_SEGMENTER_MODEL,
+    BUBBLE_CONF_THRESHOLD,
+    TEXT_CONF_THRESHOLD,
+)
+
+
+class CombinedTextDetector:
+    def __init__(self):
+        self.bubble_detector = YoloDetector(BUBBLE_DETECTOR_MODEL, BUBBLE_CONF_THRESHOLD)
+        self.text_detector = YoloDetector(TEXT_SEGMENTER_MODEL, TEXT_CONF_THRESHOLD)
+
+    def detect(self, image: np.ndarray) -> list[BubbleBox]:
+        bubble_boxes = self.bubble_detector.detect(image)
+        text_boxes = self.text_detector.detect(image)
+
+        result_boxes = []
+        used_text_boxes = set()
+
+        for b in bubble_boxes:
+            inside_text = [
+                t for i, t in enumerate(text_boxes)
+                if self._is_inside(t, b)
+            ]
+            if inside_text:
+                # Merge all text lines inside this bubble with safe padding
+                raw_min_x = min(t.x1 for t in inside_text) - 4
+                raw_min_y = min(t.y1 for t in inside_text) - 4
+                raw_max_x = max(t.x2 for t in inside_text) + 4
+                raw_max_y = max(t.y2 for t in inside_text) + 4
+
+                # Guarantee that box + 5px mask dilation stays at least 6px inside the bubble border
+                min_x = max(b.x1 + 11, raw_min_x)
+                min_y = max(b.y1 + 11, raw_min_y)
+                max_x = min(b.x2 - 11, raw_max_x)
+                max_y = min(b.y2 - 11, raw_max_y)
+
+                if max_x > min_x and max_y > min_y:
+                    merged_box = BubbleBox(
+                        int(min_x), int(min_y), int(max_x), int(max_y),
+                        max(t.confidence for t in inside_text)
+                    )
+                    result_boxes.append(merged_box)
+
+                for i, t in enumerate(text_boxes):
+                    if self._is_inside(t, b):
+                        used_text_boxes.add(i)
+            else:
+                # Fallback for bubbles with no detected text boxes inside
+                w = b.x2 - b.x1
+                h = b.y2 - b.y1
+                margin_x = max(10, int(w * 0.12))
+                margin_y = max(10, int(h * 0.12))
+                inner_box = BubbleBox(
+                    b.x1 + margin_x,
+                    b.y1 + margin_y,
+                    max(b.x1 + margin_x + 1, b.x2 - margin_x),
+                    max(b.y1 + margin_y + 1, b.y2 - margin_y),
+                    b.confidence,
+                )
+                result_boxes.append(inner_box)
+
+        # Include standalone text boxes outside any speech bubble (e.g. SFX)
+        for i, t in enumerate(text_boxes):
+            if i not in used_text_boxes:
+                result_boxes.append(t)
+
+        return result_boxes
+
+    @staticmethod
+    def _is_inside(text_box: BubbleBox, bubble_box: BubbleBox) -> bool:
+        tc_x = (text_box.x1 + text_box.x2) / 2
+        tc_y = (text_box.y1 + text_box.y2) / 2
+        return (
+            bubble_box.x1 <= tc_x <= bubble_box.x2
+            and bubble_box.y1 <= tc_y <= bubble_box.y2
+        )

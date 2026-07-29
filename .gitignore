@@ -1,0 +1,39 @@
+# Python Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# AI Model Files (Heavy binaries - download manually per README instructions)
+models/*.onnx
+models/*.pt
+models/*.safetensors
+models/*.pth
+models/*.bin
+
+# Local Chapter Data & Downloads
+data/raw/
+data/processed/
+data/output/
+data/
+
+# Chrome User Data & Debug Dumps
+_chrome_user_data/
+_debug/
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# IDE & OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
